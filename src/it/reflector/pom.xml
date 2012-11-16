@@ -23,7 +23,7 @@
 		<plugins>
 			<plugin>
 				<groupId>net.stickycode.plugins</groupId>
-				<artifactId>sticky-bounds-plugin</artifactId>
+				<artifactId>bounds-maven-plugin</artifactId>
 				<version>@pom.version@</version>
 				<executions>
 					<execution>

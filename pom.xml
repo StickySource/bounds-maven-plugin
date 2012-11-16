@@ -9,11 +9,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>net.stickycode.plugins</groupId>
-	<artifactId>sticky-bounds-plugin</artifactId>
+	<artifactId>bounds-maven-plugin</artifactId>
 	<version>1.11-SNAPSHOT</version>
 	<packaging>maven-plugin</packaging>
 
-	<name>sticky-bounds-plugin</name>
+	<name>bounds-maven-plugin-1</name>
 	<description>A maven plugin to update version range bounds</description>
 	<inceptionYear>2012</inceptionYear>
 	<url>http://www.StickyCode.net/plugins/sticky-bounds-plugin</url>
@@ -25,14 +25,14 @@
 	</scm>
 	
 	<prerequisites>
-		<maven>3.0.3</maven>
+		<maven>3.0.4</maven>
 	</prerequisites>
 	
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.maven</groupId>
 			<artifactId>maven-embedder</artifactId>
-			<version>3.0.3</version>
+			<version>[3.0.4]</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -45,12 +45,12 @@
 		<dependency>
 			<groupId>org.apache.maven</groupId>
 			<artifactId>maven-plugin-api</artifactId>
-			<version>3.0.3</version>
+			<version>[3.0.4]</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.maven</groupId>
 			<artifactId>maven-core</artifactId>
-			<version>3.0.3</version>
+			<version>[3.0.4]</version>
 		</dependency>
 
 		<dependency>
@@ -67,7 +67,7 @@
 				<plugin>
 					<!-- Lets you run the plugin from the command line -->
 					<groupId>net.stickycode.plugins</groupId>
-					<artifactId>sticky-bounds-plugin</artifactId>
+					<artifactId>bounds-maven-plugin</artifactId>
 					<version>${project.version}</version>
 				</plugin>
 			</plugins>
@@ -77,9 +77,6 @@
 			<plugin>
 				<artifactId>maven-plugin-plugin</artifactId>
 				<version>2.9</version>
-				<configuration>
-					<goalPrefix>sticky-bounds</goalPrefix>
-				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-invoker-plugin</artifactId>

@@ -1,0 +1,18 @@
+import java.io.*;
+import java.util.*;
+
+import org.codehaus.plexus.util.*;
+
+File pomFile = new File( basedir, "pom.xml" );
+System.out.println( "Checking for existence of first test file: " + pomFile );
+if (!pomFile.exists())
+  throw new RuntimeException(pomFile.toString() + " not found" );
+
+
+String pom = FileUtils.fileRead( pomFile, "UTF-8" ).trim();
+
+if (pom.contains(">[2.7,3)<"))
+	return true;
+	
+System.err.println("Expected version to be [2.7,3)");
+return false;

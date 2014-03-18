@@ -22,15 +22,15 @@ import nu.xom.XPathContext;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.project.MavenProject;
-import org.sonatype.aether.RepositorySystem;
-import org.sonatype.aether.RepositorySystemSession;
-import org.sonatype.aether.artifact.Artifact;
-import org.sonatype.aether.repository.RemoteRepository;
-import org.sonatype.aether.resolution.VersionRangeRequest;
-import org.sonatype.aether.resolution.VersionRangeResolutionException;
-import org.sonatype.aether.resolution.VersionRangeResult;
-import org.sonatype.aether.util.artifact.DefaultArtifact;
-import org.sonatype.aether.version.Version;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.resolution.VersionRangeRequest;
+import org.eclipse.aether.resolution.VersionRangeResolutionException;
+import org.eclipse.aether.resolution.VersionRangeResult;
+import org.eclipse.aether.version.Version;
 
 /**
  * @description Update the lower bounds of a version range to match the current version. e.g. [1.1,2) might go to [1.3,2)
@@ -44,7 +44,7 @@ public class StickyBoundsMojo
   /**
    * The Maven Project.
    * 
-   * @parameter expression="${project}"
+   * @parameter property="project"
    * @required
    * @readonly
    */

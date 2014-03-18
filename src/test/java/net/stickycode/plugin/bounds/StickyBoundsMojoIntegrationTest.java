@@ -17,9 +17,9 @@ import nu.xom.Serializer;
 import nu.xom.ValidityException;
 import nu.xom.XPathContext;
 
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.artifact.DefaultArtifact;
 import org.junit.Test;
-import org.sonatype.aether.artifact.Artifact;
-import org.sonatype.aether.util.artifact.DefaultArtifact;
 
 public class StickyBoundsMojoIntegrationTest {
 

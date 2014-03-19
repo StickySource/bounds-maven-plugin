@@ -24,6 +24,19 @@ import org.junit.Test;
 public class StickyBoundsMojoIntegrationTest {
 
   @Test
+  public void matchVersionRanges() {
+    StickyBoundsMojo mojo = new StickyBoundsMojo();
+    assertThat(mojo.matchVersion("1.0,2").matches()).isFalse();
+    assertThat(mojo.matchVersion("[1.0,2]").matches()).isFalse();
+    assertThat(mojo.matchVersion("[1.0,2)").matches()).isTrue();
+    assertThat(mojo.matchVersion("[1.0,2.0)").matches()).isTrue();
+    assertThat(mojo.matchVersion("[1.0,)").matches()).isTrue();
+    assertThat(mojo.matchVersion("[1.0,2.3.4)").matches()).isTrue();
+    assertThat(mojo.matchVersion("[1.0.4,2.3.4)").matches()).isTrue();
+    assertThat(mojo.matchVersion("[1.0.4-SNAPSHOT,2.3.4-SNAPSHOT)").matches()).isTrue();
+  } 
+
+  @Test
   public void update()
       throws ValidityException, ParsingException, IOException {
     Document pom = new Builder().build(new File(new File("src/it/reflector"), "pom.xml"));

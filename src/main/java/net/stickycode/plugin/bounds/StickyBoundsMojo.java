@@ -65,7 +65,7 @@ public class StickyBoundsMojo
    */
   private RepositorySystemSession session;
 
-  private Pattern range = Pattern.compile("\\[[0-9.A-Za-z]+,([0-9]+)\\)");
+  private Pattern range = Pattern.compile("\\[[0-9.\\-A-Za-z]+,([0-9.\\-A-Za-z]+)?\\)");
 
   /**
    * The project's remote repositories to use for the resolution.
@@ -75,13 +75,17 @@ public class StickyBoundsMojo
    */
   private List<RemoteRepository> repositories;
 
+  Matcher matchVersion(String version) {
+    return range.matcher(version);
+  }
+
   public void execute() {
     Document pom = load();
     boolean changed = false;
 
     for (Dependency dependency : project.getDependencies()) {
       String version = dependency.getVersion();
-      Matcher versionMatch = range.matcher(version);
+      Matcher versionMatch = matchVersion(version);
       if (versionMatch.matches()) {
         Artifact artifact = new DefaultArtifact(
             dependency.getGroupId(),

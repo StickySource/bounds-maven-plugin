@@ -1,13 +1,5 @@
 package net.stickycode.plugin.bounds;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import nu.xom.Builder;
 import nu.xom.Document;
 import nu.xom.Element;
@@ -18,7 +10,6 @@ import nu.xom.ParsingException;
 import nu.xom.Serializer;
 import nu.xom.ValidityException;
 import nu.xom.XPathContext;
-
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.project.MavenProject;
@@ -31,6 +22,15 @@ import org.eclipse.aether.resolution.VersionRangeRequest;
 import org.eclipse.aether.resolution.VersionRangeResolutionException;
 import org.eclipse.aether.resolution.VersionRangeResult;
 import org.eclipse.aether.version.Version;
+
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @description Update the lower bounds of a version range to match the current version. e.g. [1.1,2) might go to [1.3,2)
@@ -75,6 +75,11 @@ public class StickyBoundsMojo
    */
   private List<RemoteRepository> repositories;
 
+  /**
+   * @parameter property="includeSnapshots" default-value="false"
+   */
+  private Boolean includeSnapshots = false;
+
   Matcher matchVersion(String version) {
     return range.matcher(version);
   }
@@ -93,8 +98,9 @@ public class StickyBoundsMojo
             dependency.getType(),
             dependency.getClassifier(),
             version);
-        Version highestVersion = highestVersion(version, artifact);
-        String newVersion = "[" + highestVersion.toString() + "," + versionMatch.group(1) + ")";
+        Version highestVersion = highestVersion(artifact);
+        String upperVersion = versionMatch.group(1) != null ? versionMatch.group(1) : "";
+        String newVersion = "[" + highestVersion.toString() + "," + upperVersion + ")";
         if (!newVersion.equals(version)) {
           getLog().info("Updating " + artifact.toString() + " to " + newVersion);
           update(pom, artifact, newVersion);
@@ -130,9 +136,20 @@ public class StickyBoundsMojo
     }
   }
 
-  private Version highestVersion(String version, Artifact artifact) {
+  private Version highestVersion(Artifact artifact) {
     VersionRangeRequest request = new VersionRangeRequest(artifact, repositories, null);
     VersionRangeResult v = resolve(request);
+    
+    if (!includeSnapshots) {
+      List<Version> filtered = new ArrayList<Version>();
+      for (Version aVersion: v.getVersions()) {
+        if (!aVersion.toString().endsWith("SNAPSHOT")) {
+          filtered.add(aVersion);
+        }
+      }
+      v.setVersions(filtered);
+    }
+
     if (v.getHighestVersion() == null)
       throw new RuntimeException("Failed to resolve " + artifact.toString(), v.getExceptions().get(0));
 

@@ -18,3 +18,27 @@ If you want to include any SNAPSHOT references when calculating the lower bound,
     -DincludeSnapshots
 
 when calling `mvn`.
+
+== Update bounds during release
+
+To update the bounds during release you can do this
+
+    <pluginManagement>
+     <plugins>
+
+      <plugin>
+       <groupId>net.stickycode.plugins</groupId>
+       <artifactId>sticky-bounds-plugin</artifactId>
+       <version>2.3</version>
+      </plugin>
+      <plugin>
+       <groupId>org.apache.maven.plugins</groupId>
+       <artifactId>maven-release-plugin</artifactId>
+       <version>2.2.2</version>
+       <configuration>
+         <preparationGoals>sticky-bounds:update enforcer:enforce clean verify</preparationGoals>
+       </configuration>
+      </plugin>
+     </plugins>
+    </pluginManagement>
+

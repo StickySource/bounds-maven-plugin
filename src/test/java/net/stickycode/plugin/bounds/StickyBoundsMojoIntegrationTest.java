@@ -1,13 +1,5 @@
 package net.stickycode.plugin.bounds;
 
-import static org.fest.assertions.Assertions.assertThat;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
 import nu.xom.Builder;
 import nu.xom.Document;
 import nu.xom.Node;
@@ -16,10 +8,18 @@ import nu.xom.ParsingException;
 import nu.xom.Serializer;
 import nu.xom.ValidityException;
 import nu.xom.XPathContext;
-
+import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.junit.Test;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+import static org.fest.assertions.Assertions.assertThat;
 
 public class StickyBoundsMojoIntegrationTest {
 
@@ -41,7 +41,7 @@ public class StickyBoundsMojoIntegrationTest {
 
   @Test
   public void update()
-      throws ValidityException, ParsingException, IOException {
+      throws ValidityException, ParsingException, IOException, MojoExecutionException {
     Document pom = new Builder().build(new File(new File("src/it/reflector"), "pom.xml"));
     Artifact artifact = new DefaultArtifact(
         "net.stickycode",
@@ -63,7 +63,7 @@ public class StickyBoundsMojoIntegrationTest {
 
   @Test
   public void updateWithClassifier()
-      throws ValidityException, ParsingException, IOException {
+      throws ValidityException, ParsingException, IOException, MojoExecutionException {
     Document pom = new Builder().build(new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("classifiers.xml"))));
     Artifact artifact = new DefaultArtifact(
         "net.stickycode",
@@ -85,7 +85,7 @@ public class StickyBoundsMojoIntegrationTest {
   
   @Test
   public void updateTheClassifier()
-      throws ValidityException, ParsingException, IOException {
+      throws ValidityException, ParsingException, IOException, MojoExecutionException {
     Document pom = new Builder().build(new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("classifiers.xml"))));
     Artifact artifact = new DefaultArtifact(
         "net.stickycode",

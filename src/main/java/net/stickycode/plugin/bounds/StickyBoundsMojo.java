@@ -12,6 +12,7 @@ import nu.xom.ValidityException;
 import nu.xom.XPathContext;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
@@ -80,11 +81,16 @@ public class StickyBoundsMojo
    */
   private Boolean includeSnapshots = false;
 
+  /**
+   * @parameter property="failImmediately" default-value="false"
+   */
+  private Boolean failImmediately = false;
+
   Matcher matchVersion(String version) {
     return range.matcher(version);
   }
 
-  public void execute() {
+  public void execute() throws MojoExecutionException {
     Document pom = load();
     boolean changed = false;
 
@@ -98,13 +104,20 @@ public class StickyBoundsMojo
             dependency.getType(),
             dependency.getClassifier(),
             version);
-        Version highestVersion = highestVersion(artifact);
-        String upperVersion = versionMatch.group(1) != null ? versionMatch.group(1) : "";
-        String newVersion = "[" + highestVersion.toString() + "," + upperVersion + ")";
-        if (!newVersion.equals(version)) {
-          getLog().info("Updating " + artifact.toString() + " to " + newVersion);
-          update(pom, artifact, newVersion);
-          changed |= true;
+        try {
+          Version highestVersion = highestVersion(artifact);
+          String upperVersion = versionMatch.group(1) != null ? versionMatch.group(1) : "";
+          String newVersion = "[" + highestVersion.toString() + "," + upperVersion + ")";
+          if (!newVersion.equals(version)) {
+            update(pom, artifact, newVersion);
+            changed |= true;
+          }
+        } catch (MojoExecutionException e) {
+          if (!failImmediately) {
+            getLog().warn(e.getMessage());
+          } else {
+            throw e;
+          }
         }
       }
     }
@@ -136,7 +149,7 @@ public class StickyBoundsMojo
     }
   }
 
-  private Version highestVersion(Artifact artifact) {
+  private Version highestVersion(Artifact artifact) throws MojoExecutionException {
     VersionRangeRequest request = new VersionRangeRequest(artifact, repositories, null);
     VersionRangeResult v = resolve(request);
     
@@ -150,18 +163,22 @@ public class StickyBoundsMojo
       v.setVersions(filtered);
     }
 
-    if (v.getHighestVersion() == null)
-      throw new RuntimeException("Failed to resolve " + artifact.toString(), v.getExceptions().get(0));
+    if (v.getHighestVersion() == null) {
+      throw (v.getExceptions().isEmpty())
+          ? new MojoExecutionException("Failed to resolve " + artifact.toString())
+          : new MojoExecutionException("Failed to resolve " + artifact.toString(), v.getExceptions().get(0));
+    }
 
     return v.getHighestVersion();
   }
 
-  void update(Document pom, Artifact artifact, String newVersion) {
+  void update(Document pom, Artifact artifact, String newVersion) throws MojoExecutionException {
     XPathContext context = new XPathContext("mvn", "http://maven.apache.org/POM/4.0.0");
     Nodes nodes = pom.query(dependencyPath(artifact.getArtifactId()), context);
 
-    if (nodes.size() == 0)
-      throw new RuntimeException("Got none but was expected one matching dependency " + artifact.getArtifactId());
+    if (nodes.size() == 0) {
+      throw new MojoExecutionException(String.format("Missing <dependency> element for dependency %s, skipping.", artifact.getArtifactId()));
+    }
 
     for (int i = 0; i < nodes.size(); i++) {
       Node node = nodes.get(i);
@@ -171,10 +188,16 @@ public class StickyBoundsMojo
         if (!classifier.get(0).getValue().equals(artifact.getClassifier()))
           return;
 
-      Node version = dependency.query("mvn:version", context).get(0);
-      Element newRange = new Element("version", "http://maven.apache.org/POM/4.0.0");
-      newRange.appendChild(newVersion);
-      dependency.replaceChild(version, newRange);
+      final Nodes versionNodes = dependency.query("mvn:version", context);
+      if (versionNodes.size() > 0) {
+        getLog().info("Updating " + artifact.toString() + " to " + newVersion);
+        Node version = versionNodes.get(0);
+        Element newRange = new Element("version", "http://maven.apache.org/POM/4.0.0");
+        newRange.appendChild(newVersion);
+        dependency.replaceChild(version, newRange);
+      } else {
+        throw new MojoExecutionException(String.format("Missing <version> element for dependency %s, skipping.", artifact.getArtifactId()));
+      }
     }
   }
 

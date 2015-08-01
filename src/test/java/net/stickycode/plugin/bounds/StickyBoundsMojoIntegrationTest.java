@@ -50,7 +50,7 @@ public class StickyBoundsMojoIntegrationTest {
         "",
         "[3.1,4)");
 
-    new StickyBoundsMojo().update(pom, artifact, "[3.6,4)");
+    new StickyBoundsMojo().updateDependency(pom, artifact, "[3.6,4)");
     XPathContext context = new XPathContext("mvn", "http://maven.apache.org/POM/4.0.0");
 
     Nodes versions = pom.query("//mvn:version", context);
@@ -72,7 +72,7 @@ public class StickyBoundsMojoIntegrationTest {
         "",
         "[2.1,4)");
     
-    new StickyBoundsMojo().update(pom, artifact, "[2.6,3)");
+    new StickyBoundsMojo().updateDependency(pom, artifact, "[2.6,3)");
     XPathContext context = new XPathContext("mvn", "http://maven.apache.org/POM/4.0.0");
     
     Nodes versions = pom.query("//mvn:version", context);
@@ -94,7 +94,7 @@ public class StickyBoundsMojoIntegrationTest {
         "test-jar",
         "[2.1,4)");
 
-    new StickyBoundsMojo().update(pom, artifact, "[2.6,3)");
+    new StickyBoundsMojo().updateDependency(pom, artifact, "[2.6,3)");
     XPathContext context = new XPathContext("mvn", "http://maven.apache.org/POM/4.0.0");
 
     Nodes versions = pom.query("//mvn:version", context);

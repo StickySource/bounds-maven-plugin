@@ -19,6 +19,7 @@ If you want to include any SNAPSHOT references when calculating the lower bound,
 
 when calling `mvn`.
 
+
 == Update bounds during release
 
 To update the bounds during release you can do this
@@ -28,17 +29,37 @@ To update the bounds during release you can do this
 
       <plugin>
        <groupId>net.stickycode.plugins</groupId>
-       <artifactId>sticky-bounds-plugin</artifactId>
-       <version>2.3</version>
+       <artifactId>bounds-maven-plugin</artifactId>
+       <version>2.6</version>
       </plugin>
       <plugin>
        <groupId>org.apache.maven.plugins</groupId>
        <artifactId>maven-release-plugin</artifactId>
        <version>2.2.2</version>
        <configuration>
-         <preparationGoals>sticky-bounds:update enforcer:enforce clean verify</preparationGoals>
+         <preparationGoals>bounds:update enforcer:enforce clean verify</preparationGoals>
        </configuration>
       </plugin>
      </plugins>
     </pluginManagement>
+
+== Line endings
+
+You can specify the line separator used like so
+
+      <plugin>
+       <groupId>net.stickycode.plugins</groupId>
+       <artifactId>bounds-maven-plugin</artifactId>
+       <version>2.6</version>
+       <configuration>
+        <lineSeparator>Unix</lineSeparator>
+       </configuration>
+      </plugin>
+
+
+== Release 2.6
+
+* added support for dependencyManagement - although I would suggest you never ever us it
+* added support for version defined as properties - although again I would suggest you don't do that
+* allow the line separator on rewrite to be configured (Mac, Unix Windows), useful when you define the line ending in your SCM and need re-generated poms to match
 

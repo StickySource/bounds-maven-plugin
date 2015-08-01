@@ -25,6 +25,9 @@
 				<groupId>net.stickycode.plugins</groupId>
 				<artifactId>bounds-maven-plugin</artifactId>
 				<version>@pom.version@</version>
+                                <configuration>
+                                  <lineSeparator>Mac</lineSeparator>
+                                </configuration>
 				<executions>
 					<execution>
 						<phase>test</phase>

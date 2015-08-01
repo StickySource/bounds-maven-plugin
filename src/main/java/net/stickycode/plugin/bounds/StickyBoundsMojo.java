@@ -92,6 +92,14 @@ public class StickyBoundsMojo
    */
   private Boolean failImmediately = false;
 
+  /**
+   * The line separator used when rewriting the pom, this to defaults to your platform encoding but if you fix your encoding despite
+   * platform then you should use that.
+   * 
+   * @parameter property="lineSeparator"
+   */
+  private LineSeparator lineSeparator = LineSeparator.defaultValue();
+
   Matcher matchVersion(String version) {
     return range.matcher(version);
   }
@@ -216,8 +224,8 @@ public class StickyBoundsMojo
         getLog()
             .warn(
                 "If you use dependency composition then you will find that version properties "
-                + "are really not that useful. Its an extra indirection that often you don't need. "
-                + "IMO people take the magic number refactoring too far");
+                    + "are really not that useful. Its an extra indirection that often you don't need. "
+                    + "IMO people take the magic number refactoring too far");
         return dependency;
       }
     }
@@ -227,7 +235,7 @@ public class StickyBoundsMojo
           getLog()
               .warn(
                   "Dependency Management is an anti pattern, think OO or functional is doesn't matter "
-                  + "dependencies should be composed NOT inherited");
+                      + "dependencies should be composed NOT inherited");
           return dependency;
         }
       }
@@ -248,6 +256,10 @@ public class StickyBoundsMojo
   private Serializer createSerialiser() {
     try {
       Serializer serializer = new StickySerializer(new FileOutputStream(project.getFile()), "UTF-8");
+      if (!lineSeparator.equals(System.lineSeparator()))
+        getLog().info(String.format("The line separator is configured to %s, not using system line separator", lineSeparator));
+
+      serializer.setLineSeparator(lineSeparator.value());
       return serializer;
     }
     catch (UnsupportedEncodingException e) {

@@ -75,8 +75,33 @@ You can specify the line separator used like so
        </configuration>
       </plugin>
 
+## Extract Current Version
+
+To get the current version of a library from a range use bounds:current-version
+
+    <plugin>
+      <plugin>
+        <groupId>net.stickycode.plugins</groupId>
+        <artifactId>bounds-maven-plugin</artifactId>
+        <version>3.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>current-version</goal>
+            </goals>
+            <configuration>
+              <stickyCoercion.version>net.stickycode:sticky-coercion:[2,3]</stickyCoercion.version>
+            </configuration>
+          </execution>
+        </execution>
+      </plugin>
+    </plugin>
 
 ## Releases
+
+### Release 3.1
+
+* support for setting a property to the highest version in a range
 
 ### Release 2.6
 

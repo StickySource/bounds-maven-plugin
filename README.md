@@ -77,7 +77,7 @@ You can specify the line separator used like so
 
 ## Extract Current Version
 
-To get the current version of a library from a range use bounds:current-version
+To get the current version of a library from a range use bounds:current-version, this will set the property *stickyCoercion.version* to the right 2.x version
 
     <plugin>
       <plugin>

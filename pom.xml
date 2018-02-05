@@ -69,21 +69,6 @@
   </dependencies>
 
   <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <!-- Lets you run the plugin from the command line -->
-          <groupId>net.stickycode.plugins</groupId>
-          <artifactId>bounds-maven-plugin</artifactId>
-          <version>${project.version}</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-release-plugin</artifactId>
-          <version>2.5</version>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-
     <plugins>
       <plugin>
         <artifactId>maven-plugin-plugin</artifactId>

@@ -83,7 +83,7 @@ To get the current version of a library from a range use bounds:current-version,
       <plugin>
         <groupId>net.stickycode.plugins</groupId>
         <artifactId>bounds-maven-plugin</artifactId>
-        <version>3.1</version>
+        <version>3.2</version>
         <executions>
           <execution>
             <goals>
@@ -99,7 +99,7 @@ To get the current version of a library from a range use bounds:current-version,
 
 ## Releases
 
-### Release 3.1
+### Release 3.2
 
 * support for setting a property to the highest version in a range
 

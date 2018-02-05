@@ -14,6 +14,9 @@ import nu.xom.XPathContext;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
@@ -35,69 +38,53 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @description Update the lower bounds of a version range to match the current version. e.g. [1.1,2) might go to [1.3,2)
- * @goal update
- * @requiresDirectInvocation true
- * @threadSafe
+ * Update the lower bounds of a version range to match the current version. e.g. [1.1,2) might go to [1.3,2)
  */
+@Mojo(threadSafe = true, name = "update", requiresDirectInvocation = true)
 public class StickyBoundsMojo
     extends AbstractMojo {
 
   /**
    * The Maven Project.
-   * 
-   * @parameter property="project"
-   * @required
-   * @readonly
    */
+  @Parameter(defaultValue = "${project}", required = true, readonly = true)
   private MavenProject project;
 
   /**
    * The entry point to Aether, i.e. the component doing all the work.
    * 
-   * @component
    */
+  @Component
   private RepositorySystem repository;
 
   /**
    * The current repository/network configuration of Maven.
-   * 
-   * @parameter default-value="${repositorySystemSession}"
-   * @readonly
    */
+  @Parameter(defaultValue = "${repositorySystemSession}", required = true, readonly = true)
   private RepositorySystemSession session;
 
   private Pattern range = Pattern.compile("\\[[0-9.\\-A-Za-z]+\\s*,\\s*([0-9.\\-A-Za-z]+)?\\)");
 
   /**
    * The project's remote repositories to use for the resolution.
-   * 
-   * @parameter default-value="${project.remoteProjectRepositories}"
-   * @readonly
    */
+  @Parameter(defaultValue = "${project.remoteProjectRepositories}", required = true, readonly = true)
   private List<RemoteRepository> repositories;
 
-  /**
-   * @parameter property="includeSnapshots" default-value="false"
-   */
+  @Parameter(defaultValue = "false")
   private Boolean includeSnapshots = false;
 
-  /**
-   * @parameter property="updateProperties" default-value="false"
-   */
+  @Parameter(defaultValue = "false")
   private Boolean updateProperties = false;
 
-  /**
-   * @parameter property="failImmediately" default-value="false"
-   */
+  @Parameter(defaultValue = "false")
   private Boolean failImmediately = false;
 
   /**
    * The line separator used when rewriting the pom, this to defaults to your platform encoding but if you fix your encoding despite
    * platform then you should use that.
-   * 
-   * @parameter property="lineSeparator"
    */
+  @Parameter
   private LineSeparator lineSeparator = LineSeparator.defaultValue();
 
   Matcher matchVersion(String version) {
@@ -200,14 +187,14 @@ public class StickyBoundsMojo
   private Artifact resolveLatestVersionRange(Dependency dependency, String version) throws MojoExecutionException {
     Matcher versionMatch = matchVersion(version);
     Artifact artifact = new DefaultArtifact(dependency.getGroupId(), dependency.getArtifactId(),
-        dependency.getType(), dependency.getClassifier(), version);
+      dependency.getType(), dependency.getClassifier(), version);
 
     if (versionMatch.matches()) {
 
       Version highestVersion = highestVersion(artifact);
       String upperVersion = versionMatch.group(1) != null
-          ? versionMatch.group(1)
-          : "";
+        ? versionMatch.group(1)
+        : "";
       String newVersion = "[" + highestVersion.toString() + "," + upperVersion + ")";
 
       artifact = artifact.setVersion(newVersion);
@@ -222,10 +209,10 @@ public class StickyBoundsMojo
     for (Dependency dependency : project.getDependencies()) {
       if (propertyName.equals(dependency.getArtifactId() + ".version")) {
         getLog()
-            .warn(
-                "If you use dependency composition then you will find that version properties "
-                    + "are really not that useful. Its an extra indirection that often you don't need. "
-                    + "IMO people take the magic number refactoring too far");
+          .warn(
+            "If you use dependency composition then you will find that version properties "
+              + "are really not that useful. Its an extra indirection that often you don't need. "
+              + "IMO people take the magic number refactoring too far");
         return dependency;
       }
     }
@@ -233,9 +220,9 @@ public class StickyBoundsMojo
       for (Dependency dependency : project.getDependencyManagement().getDependencies()) {
         if (propertyName.equals(dependency.getArtifactId() + ".version")) {
           getLog()
-              .warn(
-                  "Dependency Management is an anti pattern, think OO or functional is doesn't matter "
-                      + "dependencies should be composed NOT inherited");
+            .warn(
+              "Dependency Management is an anti pattern, think OO or functional is doesn't matter "
+                + "dependencies should be composed NOT inherited");
           return dependency;
         }
       }
@@ -286,8 +273,8 @@ public class StickyBoundsMojo
 
     if (v.getHighestVersion() == null) {
       throw (v.getExceptions().isEmpty())
-          ? new MojoExecutionException("Failed to resolve " + artifact.toString())
-          : new MojoExecutionException("Failed to resolve " + artifact.toString(), v.getExceptions().get(0));
+        ? new MojoExecutionException("Failed to resolve " + artifact.toString())
+        : new MojoExecutionException("Failed to resolve " + artifact.toString(), v.getExceptions().get(0));
     }
 
     return v.getHighestVersion();
@@ -326,7 +313,7 @@ public class StickyBoundsMojo
 
     if (nodes.size() == 0) {
       throw new MojoExecutionException(String.format("Missing <dependency> element for dependency %s, skipping.",
-          artifact.getArtifactId()));
+        artifact.getArtifactId()));
     }
 
     for (int i = 0; i < nodes.size(); i++) {
@@ -349,7 +336,7 @@ public class StickyBoundsMojo
       }
       else {
         throw new MojoExecutionException(String.format("Missing <version> element for dependency %s, skipping.",
-            artifact.getArtifactId()));
+          artifact.getArtifactId()));
       }
     }
   }

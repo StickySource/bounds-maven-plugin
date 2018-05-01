@@ -187,7 +187,7 @@ public class StickyBoundsMojo
   private Artifact resolveLatestVersionRange(Dependency dependency, String version) throws MojoExecutionException {
     Matcher versionMatch = matchVersion(version);
     Artifact artifact = new DefaultArtifact(dependency.getGroupId(), dependency.getArtifactId(),
-      dependency.getType(), dependency.getClassifier(), version);
+      dependency.getClassifier(), dependency.getType(), version);
 
     if (versionMatch.matches()) {
 
@@ -221,7 +221,7 @@ public class StickyBoundsMojo
         if (propertyName.equals(dependency.getArtifactId() + ".version")) {
           getLog()
             .warn(
-              "Dependency Management is an anti pattern, think OO or functional is doesn't matter "
+              "Dependency Management is an anti pattern, think OO or functional, "
                 + "dependencies should be composed NOT inherited");
           return dependency;
         }
@@ -243,7 +243,7 @@ public class StickyBoundsMojo
   private Serializer createSerialiser() {
     try {
       Serializer serializer = new StickySerializer(new FileOutputStream(project.getFile()), "UTF-8");
-      if (!lineSeparator.equals(System.lineSeparator()))
+      if (!System.lineSeparator().equals(lineSeparator.value()))
         getLog().info(String.format("The line separator is configured to %s, not using system line separator", lineSeparator));
 
       serializer.setLineSeparator(lineSeparator.value());

@@ -49,7 +49,7 @@ To update the bounds during release you can do this
       <plugin>
        <groupId>net.stickycode.plugins</groupId>
        <artifactId>bounds-maven-plugin</artifactId>
-       <version>2.6</version>
+       <version>3.3</version>
       </plugin>
       <plugin>
        <groupId>org.apache.maven.plugins</groupId>
@@ -69,7 +69,7 @@ You can specify the line separator used like so
       <plugin>
        <groupId>net.stickycode.plugins</groupId>
        <artifactId>bounds-maven-plugin</artifactId>
-       <version>2.6</version>
+       <version>3.3</version>
        <configuration>
         <lineSeparator>Unix</lineSeparator>
        </configuration>
@@ -83,7 +83,7 @@ To get the current version of a library from a range use bounds:current-version,
       <plugin>
         <groupId>net.stickycode.plugins</groupId>
         <artifactId>bounds-maven-plugin</artifactId>
-        <version>3.2</version>
+        <version>3.3</version>
         <executions>
           <execution>
             <goals>
@@ -98,6 +98,10 @@ To get the current version of a library from a range use bounds:current-version,
     </plugin>
 
 ## Releases
+
+### Release 3.3
+
+* dependencies with classifiers were being ignored incorrectly
 
 ### Release 3.2
 

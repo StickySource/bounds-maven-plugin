@@ -10,7 +10,7 @@
 
   <groupId>net.stickycode.plugins</groupId>
   <artifactId>bounds-maven-plugin</artifactId>
-  <version>3.3-SNAPSHOT</version>
+  <version>3.4-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
   <name>bounds-maven-plugin-3</name>

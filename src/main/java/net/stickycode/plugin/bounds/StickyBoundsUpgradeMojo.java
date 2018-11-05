@@ -39,10 +39,10 @@ import nu.xom.ValidityException;
 import nu.xom.XPathContext;
 
 /**
- * Update the lower bounds of a version range to match the current version. e.g. [1.1,2) might go to [1.3,2)
+ * Upgrade the lower bounds of a version range to match the highest version. e.g. [1.1,2) might go to [2.7,3)
  */
-@Mojo(threadSafe = true, name = "update", requiresDirectInvocation = true)
-public class StickyBoundsMojo
+@Mojo(threadSafe = true, name = "upgrade", requiresDirectInvocation = false, requiresProject = true)
+public class StickyBoundsUpgradeMojo
     extends AbstractMojo {
 
   /**
@@ -64,7 +64,7 @@ public class StickyBoundsMojo
   @Parameter(defaultValue = "${repositorySystemSession}", required = true, readonly = true)
   private RepositorySystemSession session;
 
-  private Pattern range = Pattern.compile("\\[[0-9.\\-A-Za-z]+\\s*,\\s*([0-9.\\-A-Za-z]+)?\\)");
+  private Pattern range = Pattern.compile("\\[[0-9.\\-A-Za-z]+\\s*(,\\s*([0-9.\\-A-Za-z]+)?)\\)");
 
   /**
    * The project's remote repositories to use for the resolution.
@@ -139,7 +139,7 @@ public class StickyBoundsMojo
         Artifact artifact = resolveLatestVersionRange(dependency, dependency.getVersion());
 
         if (!artifact.getVersion().equals(version)) {
-          updateDependency(pom, artifact, artifact.getVersion());
+          updateDependency(pom, artifact, version);
           changed |= true;
         }
       }
@@ -186,25 +186,27 @@ public class StickyBoundsMojo
     }
   }
 
-  private Artifact resolveLatestVersionRange(Dependency dependency, String version) throws MojoExecutionException {
+  Artifact resolveLatestVersionRange(Dependency dependency, String version) throws MojoExecutionException {
     Matcher versionMatch = matchVersion(version);
-    Artifact artifact = new DefaultArtifact(dependency.getGroupId(), dependency.getArtifactId(),
-      dependency.getClassifier(), dependency.getType(), version);
 
     if (versionMatch.matches()) {
+      Artifact artifact = new DefaultArtifact(dependency.getGroupId(), dependency.getArtifactId(),
+        dependency.getClassifier(), dependency.getType(), version.replaceFirst(versionMatch.group(1), ","));
 
       Version highestVersion = highestVersion(artifact);
-      String upperVersion = versionMatch.group(1) != null
-        ? versionMatch.group(1)
-        : "";
-      String newVersion = "[" + highestVersion.toString() + "," + upperVersion + ")";
+      String newVersion = "[" + highestVersion.toString() + "," + majorVersionPlusOne(highestVersion) + ")";
 
-      artifact = artifact.setVersion(newVersion);
-      return artifact;
+      return artifact.setVersion(newVersion);
     }
     else {
-      return artifact;
+      return new DefaultArtifact(dependency.getGroupId(), dependency.getArtifactId(),
+        dependency.getClassifier(), dependency.getType(), version);
     }
+  }
+
+  private Integer majorVersionPlusOne(Version highestVersion) {
+    String[] split = highestVersion.toString().split("\\.");
+    return Integer.valueOf(split[0]) + 1;
   }
 
   private Dependency findDependencyUsingVersionProperty(String propertyName) {
@@ -259,7 +261,7 @@ public class StickyBoundsMojo
     }
   }
 
-  private Version highestVersion(Artifact artifact) throws MojoExecutionException {
+  protected Version highestVersion(Artifact artifact) throws MojoExecutionException {
     VersionRangeRequest request = new VersionRangeRequest(artifact, repositories, null);
     VersionRangeResult v = resolve(request);
 
@@ -328,7 +330,7 @@ public class StickyBoundsMojo
 
       final Nodes versionNodes = dependency.query("mvn:version", context);
       if (versionNodes.size() > 0) {
-        getLog().info("Updating dependency to " + artifact.toString() + " from " + oldVersion);
+        getLog().info("Upgrading dependency to " + artifact.toString() + " from " + oldVersion);
         Element version = (Element) versionNodes.get(0);
         if (!version.getValue().startsWith("${") || updateProperties) {
           Element newRange = new Element("version", "http://maven.apache.org/POM/4.0.0");

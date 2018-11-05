@@ -8,9 +8,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.version.Version;
 import org.junit.Test;
 
 import nu.xom.Builder;
@@ -22,11 +24,11 @@ import nu.xom.Serializer;
 import nu.xom.ValidityException;
 import nu.xom.XPathContext;
 
-public class StickyBoundsMojoIntegrationTest {
+public class StickyBoundsUpgradeMojoIntegrationTest {
 
   @Test
   public void matchVersionRanges() {
-    StickyBoundsMojo mojo = new StickyBoundsMojo();
+    StickyBoundsUpgradeMojo mojo = new StickyBoundsUpgradeMojo();
     assertThat(mojo.matchVersion("1.0,2").matches()).isFalse();
     assertThat(mojo.matchVersion("[1.0,2]").matches()).isFalse();
     assertThat(mojo.matchVersion("[1.0,2)").matches()).isTrue();
@@ -41,9 +43,37 @@ public class StickyBoundsMojoIntegrationTest {
   }
 
   @Test
+  public void upgrade() throws MojoExecutionException {
+    StickyBoundsUpgradeMojo mojo = new StickyBoundsUpgradeMojo() {
+
+      @Override
+      protected org.eclipse.aether.version.Version highestVersion(Artifact artifact)
+          throws MojoExecutionException {
+        return new org.eclipse.aether.version.Version() {
+
+          @Override
+          public String toString() {
+            return "6.7";
+          }
+
+          @Override
+          public int compareTo(Version o) {
+            return 0;
+          }
+        };
+      }
+    };
+
+    Dependency dependency = new Dependency();
+    assertThat(mojo.resolveLatestVersionRange(dependency, "[1.2,2)").getVersion()).isEqualTo("[6.7,7)");
+    assertThat(mojo.resolveLatestVersionRange(dependency, "[2.2,5)").getVersion()).isEqualTo("[6.7,7)");
+    assertThat(mojo.resolveLatestVersionRange(dependency, "[6.7,7)").getVersion()).isEqualTo("[6.7,7)");
+  }
+
+  @Test
   public void update()
       throws ValidityException, ParsingException, IOException, MojoExecutionException {
-    Document pom = new Builder().build(new File(new File("src/it/update"), "pom.xml"));
+    Document pom = new Builder().build(new File(new File("src/it/upgrade"), "pom.xml"));
     Artifact artifact = new DefaultArtifact(
       "net.stickycode",
       "sticky-coercion",
@@ -51,7 +81,7 @@ public class StickyBoundsMojoIntegrationTest {
       "",
       "[3.6,4)");
 
-    new StickyBoundsMojo().updateDependency(pom, artifact, "[3.1,4)");
+    new StickyBoundsUpgradeMojo().updateDependency(pom, artifact, "[3.1,4)");
     XPathContext context = new XPathContext("mvn", "http://maven.apache.org/POM/4.0.0");
 
     Nodes versions = pom.query("//mvn:version", context);
@@ -74,7 +104,7 @@ public class StickyBoundsMojoIntegrationTest {
       "",
       "[2.6,3)");
 
-    new StickyBoundsMojo().updateDependency(pom, artifact, "[2.1,3)");
+    new StickyBoundsUpgradeMojo().updateDependency(pom, artifact, "[2.1,3)");
     XPathContext context = new XPathContext("mvn", "http://maven.apache.org/POM/4.0.0");
 
     Nodes versions = pom.query("//mvn:version", context);
@@ -97,7 +127,7 @@ public class StickyBoundsMojoIntegrationTest {
       "test-jar",
       "[2.6,3)");
 
-    new StickyBoundsMojo().updateDependency(pom, artifact, "[2.1,3)");
+    new StickyBoundsUpgradeMojo().updateDependency(pom, artifact, "[2.6,3)");
     XPathContext context = new XPathContext("mvn", "http://maven.apache.org/POM/4.0.0");
 
     Nodes versions = pom.query("//mvn:version", context);
@@ -111,7 +141,7 @@ public class StickyBoundsMojoIntegrationTest {
   @Test
   public void writeNamespacesUnchanged()
       throws ValidityException, ParsingException, IOException {
-    Document pom = new Builder().build(new File(new File("src/it/update"), "pom.xml"));
+    Document pom = new Builder().build(new File(new File("src/it/upgrade"), "pom.xml"));
     Serializer s = new StickySerializer(new FileOutputStream(new File("target/tmp.xml")), "UTF-8");
     s.write(pom);
   }

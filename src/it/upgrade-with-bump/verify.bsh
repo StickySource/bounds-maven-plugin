@@ -1,0 +1,19 @@
+import java.io.*;
+import java.util.*;
+
+import org.codehaus.plexus.util.*;
+
+File pomFile = new File( basedir, "pom.xml" );
+System.out.println( "Checking for existence of first test file: " + pomFile );
+if (!pomFile.exists())
+  throw new RuntimeException(pomFile.toString() + " not found" );
+
+
+String pom = FileUtils.fileRead( pomFile, "UTF-8" ).trim();
+
+if (pom.contains(">[6.6,7)<"))
+  if (pom.contains(">2.1-SNAPSHOT<"))
+	return true;
+	
+System.err.println("Expected dependency version to be [6.6,7) with version bumped to 2.1-SNAPSHOT");
+return false;

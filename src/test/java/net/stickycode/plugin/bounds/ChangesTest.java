@@ -25,7 +25,6 @@ public class ChangesTest {
     updates("1.1", "1.2");
     updates("2.1", "2.2");
     updates("1.1", "1.11");
-    updates("11", "12");
   }
 
   private void updates(String v1, String v2) {

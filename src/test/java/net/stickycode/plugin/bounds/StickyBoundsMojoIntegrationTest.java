@@ -1,6 +1,6 @@
 package net.stickycode.plugin.bounds;
 
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.StrictAssertions.assertThat;
 
 import java.io.BufferedReader;
 import java.io.File;

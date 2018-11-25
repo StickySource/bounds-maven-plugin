@@ -92,34 +92,58 @@ public class StickyBoundsUpgradeMojo
     return range.matcher(version);
   }
 
+  Changes change = new Changes();
+
   @Override
   public void execute() throws MojoExecutionException {
     Document pom = load();
-    boolean changed = false;
 
-    changed |= processProperties(pom);
+    processProperties(pom);
 
-    changed |= processDependencies(pom);
+    processDependencies(pom);
 
-    changed |= processDependencyManagement(pom);
+    processDependencyManagement(pom);
 
-    if (changed) {
+    if (change.changed()) {
+      if (change.upgraded())
+        bumpMajorVersion(pom);
       writeChanges(pom);
     }
   }
 
-  private boolean processDependencyManagement(Document pom)
+  void bumpMajorVersion(Document pom) throws MojoExecutionException {
+    XPathContext context = new XPathContext("mvn", "http://maven.apache.org/POM/4.0.0");
+    Nodes project = pom.query("/mvn:project", context);
+    if (project.size() == 0)
+      throw new MojoExecutionException("Pom is broken");
+
+    Nodes nodes = pom.query("/mvn:project/mvn:version", context);
+    if (nodes.size() != 1)
+      throw new MojoExecutionException("Version is not declared correctly");
+
+    Element e = (Element) nodes.get(0);
+    String[] components = e.getValue().split("\\.");
+    components[0] = Integer.toString(Integer.valueOf(components[0]) + 1);
+
+    String bumpedVersion = String.join(".", components);
+    
+    
+    Element newVersion = new Element("version", "http://maven.apache.org/POM/4.0.0");
+    newVersion.appendChild(bumpedVersion);
+    ((Element) project.get(0)).replaceChild(e, newVersion);
+    // TODO check that the next version does not already exist
+  }
+
+  private void processDependencyManagement(Document pom)
       throws MojoExecutionException {
-    boolean changed = false;
     if (project.getDependencyManagement() != null) {
       for (Dependency dependency : project.getDependencyManagement().getDependencies()) {
         try {
           String version = dependency.getVersion();
           Artifact artifact = resolveLatestVersionRange(dependency, dependency.getVersion());
 
-          if (!artifact.getVersion().equals(version)) {
+          if (change.change(artifact.getVersion(), version)) {
             updateDependencyManagement(pom, artifact, artifact.getVersion());
-            changed |= true;
           }
         }
         catch (MojoExecutionException e) {
@@ -127,32 +151,27 @@ public class StickyBoundsUpgradeMojo
         }
       }
     }
-    return changed;
   }
 
-  private boolean processDependencies(Document pom)
+  private void processDependencies(Document pom)
       throws MojoExecutionException {
-    boolean changed = false;
     for (Dependency dependency : project.getDependencies()) {
       try {
         String version = dependency.getVersion();
         Artifact artifact = resolveLatestVersionRange(dependency, dependency.getVersion());
 
-        if (!artifact.getVersion().equals(version)) {
+        if (change.change(artifact.getVersion(), version)) {
           updateDependency(pom, artifact, version);
-          changed |= true;
         }
       }
       catch (MojoExecutionException e) {
         fail(e);
       }
     }
-    return changed;
   }
 
-  private boolean processProperties(Document pom)
+  private void processProperties(Document pom)
       throws MojoExecutionException {
-    boolean changed = false;
     for (String propertyName : project.getProperties().stringPropertyNames()) {
       if (propertyName.endsWith(".version")) {
         try {
@@ -160,9 +179,8 @@ public class StickyBoundsUpgradeMojo
           Dependency dependency = findDependencyUsingVersionProperty(propertyName);
           if (dependency != null) {
             Artifact artifact = resolveLatestVersionRange(dependency, version);
-            if (!artifact.getVersion().equals(version)) {
+            if (change.change(artifact.getVersion(), version)) {
               updateProperty(pom, propertyName, artifact.getVersion());
-              changed |= true;
             }
           }
           else {
@@ -174,7 +192,6 @@ public class StickyBoundsUpgradeMojo
         }
       }
     }
-    return changed;
   }
 
   private void fail(MojoExecutionException e) throws MojoExecutionException {

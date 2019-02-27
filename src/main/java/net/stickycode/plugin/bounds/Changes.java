@@ -6,6 +6,8 @@ public class Changes {
 
   private boolean upgrade;
 
+  private boolean acceptMinorVersionChanges = true;
+
   public boolean changed() {
     return update || upgrade;
   }
@@ -14,15 +16,13 @@ public class Changes {
     if (version.equals(version2))
       return false;
 
-    update = true;
-
     String[] v1 = version.split("\\.");
     String[] v2 = version2.split("\\.");
     if (v1.length > 0 && v2.length > 0)
       if (!v1[0].equals(v2[0]))
-        upgrade = true;
+        return upgrade = true;
 
-    return true;
+    return update = acceptMinorVersionChanges;
   }
 
   public boolean updated() {
@@ -31,6 +31,10 @@ public class Changes {
 
   public boolean upgraded() {
     return upgrade;
+  }
+
+  public void acceptMinorVersionChanges(boolean upgradeOnly) {
+    this.acceptMinorVersionChanges = !upgradeOnly;
   }
 
 }

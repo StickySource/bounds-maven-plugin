@@ -92,11 +92,19 @@ public class StickyBoundsUpgradeMojo
     return range.matcher(version);
   }
 
+  /**
+   * If bounds should be updated when there is no upgrade, useful for doing cascaded upgrades while minimising deltas
+   */
+  @Parameter()
+  private boolean acceptMinorVersionChanges = false;
+
   Changes change = new Changes();
 
   @Override
   public void execute() throws MojoExecutionException {
     Document pom = load();
+
+    change.acceptMinorVersionChanges(acceptMinorVersionChanges);
 
     processProperties(pom);
 
@@ -126,8 +134,7 @@ public class StickyBoundsUpgradeMojo
     components[0] = Integer.toString(Integer.valueOf(components[0]) + 1);
 
     String bumpedVersion = String.join(".", components);
-    
-    
+
     Element newVersion = new Element("version", "http://maven.apache.org/POM/4.0.0");
     newVersion.appendChild(bumpedVersion);
     ((Element) project.get(0)).replaceChild(e, newVersion);

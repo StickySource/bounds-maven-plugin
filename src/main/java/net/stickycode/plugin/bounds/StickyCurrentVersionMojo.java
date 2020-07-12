@@ -32,8 +32,14 @@ public class StickyCurrentVersionMojo
   @Parameter(defaultValue = "${repositorySystemSession}", readonly = true)
   private RepositorySystemSession session;
 
-  @Parameter(required = true)
+  @Parameter(required = false)
   private Map<String, String> coordinates;
+
+  /**
+   * The artifacts to get the current version for group:artifact:version
+   */
+  @Parameter(required = true)
+  private List<String> artifacts;
 
   @Parameter(defaultValue = "false")
   private Boolean includeSnapshots = false;
@@ -50,19 +56,39 @@ public class StickyCurrentVersionMojo
   @Override
   public void execute()
       throws MojoExecutionException, MojoFailureException {
-    extractVersions(coordinates);
+    if (coordinates != null)
+      throw new MojoFailureException("Coordinates are deprecated in favour of artifacts. \\n"
+        + " <artifacts>\\n"
+        + "   <artifact>group:artifact:[lower,upper)</artifact>\\n"
+        + " </artifacts>\\n");
+
+    lookupVersions(artifacts);
   }
 
-  void extractVersions(Map<String, String> coordinates) throws MojoExecutionException {
-    for (String library : coordinates.keySet()) {
-      String range = coordinates.get(library);
-      Version version = highestVersion(new DefaultArtifact(range));
-      log("setting %s to %s for %s", library, version, range);
-      project.getProperties().setProperty(library, version.toString());
-    }
+  void lookupVersions(List<String> lookup) {
+    lookup
+      .parallelStream()
+      .map(this::parseCoordinates)
+      .forEach(this::lookupArtifactVersion);
   }
 
-  private Version highestVersion(Artifact artifact) throws MojoExecutionException {
+  DefaultArtifact parseCoordinates(String gav) {
+    String[] c = gav.split(":");
+    return new DefaultArtifact(c[0],
+      c[1],
+      c.length >= 4 ? c[3] : null,
+      c.length == 5 ? c[4] : "jar",
+      c[2]);
+  }
+
+  void lookupArtifactVersion(DefaultArtifact artifact) {
+    Version version = highestVersion(artifact);
+    String propertyName = artifact.getArtifactId() + ".version";
+    project.getProperties().setProperty(propertyName, version.toString());
+    log("resolved %s to %s", artifact, version.toString());
+  }
+
+  private Version highestVersion(Artifact artifact) {
     VersionRangeRequest request = new VersionRangeRequest(artifact, repositories, null);
     VersionRangeResult v = resolve(request);
 
@@ -78,8 +104,8 @@ public class StickyCurrentVersionMojo
 
     if (v.getHighestVersion() == null) {
       throw (v.getExceptions().isEmpty())
-        ? new MojoExecutionException("Failed to resolve " + artifact.toString())
-        : new MojoExecutionException("Failed to resolve " + artifact.toString(), v.getExceptions().get(0));
+        ? new RuntimeException("Failed to resolve " + artifact.toString())
+        : new RuntimeException("Failed to resolve " + artifact.toString(), v.getExceptions().get(0));
     }
 
     return v.getHighestVersion();

@@ -21,9 +21,9 @@
               <goal>current-version</goal>
             </goals>
             <configuration>
-              <coordinates>
-                <stickyCoercion.version>net.stickycode:sticky-coercion:[2,3]</stickyCoercion.version>
-              </coordinates>
+              <artifacts>
+                <artifact>net.stickycode:sticky-coercion:[2,3]</artifact>
+              </artifacts>
             </configuration>
           </execution>
         </executions>

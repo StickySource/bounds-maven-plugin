@@ -10,12 +10,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
@@ -53,7 +55,7 @@ public class StickyBoundsMojo
 
   /**
    * The entry point to Aether, i.e. the component doing all the work.
-   * 
+   *
    */
   @Component
   private RepositorySystem repository;
@@ -99,6 +101,8 @@ public class StickyBoundsMojo
 
     changed |= processProperties(pom);
 
+    changed |= processPlugins(pom);
+
     changed |= processDependencies(pom);
 
     changed |= processDependencyManagement(pom);
@@ -106,6 +110,49 @@ public class StickyBoundsMojo
     if (changed) {
       writeChanges(pom);
     }
+  }
+
+  boolean processPlugins(Document pom) {
+    boolean changed = false;
+    for (Plugin plugin : project.getBuild().getPlugins()) {
+      if ("tiles-maven-plugin".equals(plugin.getArtifactId()))
+        changed |= processTiles(plugin, pom);
+
+      if ("shifty-maven-plugin".equals(plugin.getArtifactId()))
+        changed |= processShifty(plugin, pom);
+
+      if ("bounds-maven-plugin".equals(plugin.getArtifactId()))
+        changed |= processBounds(plugin, pom);
+    }
+    return changed;
+  }
+
+  private boolean processBounds(Plugin plugin, Document pom) {
+    for (String gav : lookupConfiguration("artifact", plugin))
+      getLog().info(gav);
+    return false;
+  }
+
+
+  private boolean processTiles(Plugin plugin, Document pom) {
+    for (String gav : lookupConfiguration("tile", plugin))
+      getLog().info(gav);
+    return false;
+  }
+
+  private boolean processShifty(Plugin plugin, Document pom) {
+    for (String gav : lookupConfiguration("artifact", plugin))
+      getLog().info(gav);
+    return false;
+  }
+
+  private List<String> lookupConfiguration(String name, Plugin plugin) {
+    List<String> gavs = new ArrayList<>();
+    for (Xpp3Dom list : ((Xpp3Dom) plugin.getConfiguration()).getChildren(name))
+      for (Xpp3Dom element : list.getChildren(name))
+        gavs.add(element.getValue());
+
+    return gavs;
   }
 
   private boolean processDependencyManagement(Document pom)

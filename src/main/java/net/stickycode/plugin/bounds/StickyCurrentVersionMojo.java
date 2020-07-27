@@ -38,7 +38,7 @@ public class StickyCurrentVersionMojo
   /**
    * The artifacts to get the current version for group:artifact:version
    */
-  @Parameter(required = true)
+  @Parameter(required = false)
   private List<String> artifacts;
 
   @Parameter(defaultValue = "false")
@@ -56,36 +56,45 @@ public class StickyCurrentVersionMojo
   @Override
   public void execute()
       throws MojoExecutionException, MojoFailureException {
-    if (coordinates != null)
-      throw new MojoFailureException("Coordinates are deprecated in favour of artifacts. \\n"
-        + " <artifacts>\\n"
-        + "   <artifact>group:artifact:[lower,upper)</artifact>\\n"
-        + " </artifacts>\\n");
 
-    lookupVersions(artifacts);
+    List<ArtifactLookup> lookup = new ArrayList<>();
+
+    if (artifacts != null)
+      for (String artifact : artifacts) {
+        lookup.add(new ArtifactLookup(artifact));
+      }
+
+    if (coordinates != null)
+      for (String property : coordinates.keySet()) {
+        lookup.add(new ArtifactLookup().withGav(coordinates.get(property)).withPropertyName(property));
+      }
+
+    lookupVersions(lookup);
   }
 
-  void lookupVersions(List<String> lookup) {
+  void lookupVersions(List<ArtifactLookup> lookup) {
     lookup
       .parallelStream()
       .map(this::parseCoordinates)
       .forEach(this::lookupArtifactVersion);
   }
 
-  DefaultArtifact parseCoordinates(String gav) {
-    String[] c = gav.split(":");
-    return new DefaultArtifact(c[0],
+  ArtifactLookup parseCoordinates(ArtifactLookup lookup) {
+    String[] c = lookup.getGav().split(":");
+    if (c.length < 3)
+      throw new RuntimeException("Invalid gav:" + lookup.getGav());
+
+    return lookup.with(new DefaultArtifact(c[0],
       c[1],
       c.length >= 4 ? c[3] : null,
       c.length == 5 ? c[4] : "jar",
-      c[2]);
+      c[2]));
   }
 
-  void lookupArtifactVersion(DefaultArtifact artifact) {
-    Version version = highestVersion(artifact);
-    String propertyName = artifact.getArtifactId() + ".version";
-    project.getProperties().setProperty(propertyName, version.toString());
-    log("resolved %s to %s", artifact, version.toString());
+  void lookupArtifactVersion(ArtifactLookup lookup) {
+    Version version = highestVersion(lookup.getArtifact());
+    project.getProperties().setProperty(lookup.getPropertyName(), version.toString());
+    log("resolved %s to %s", lookup.getArtifact(), version.toString());
   }
 
   private Version highestVersion(Artifact artifact) {

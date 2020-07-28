@@ -66,7 +66,7 @@ public class StickyBoundsMojo
   @Parameter(defaultValue = "${repositorySystemSession}", required = true, readonly = true)
   private RepositorySystemSession session;
 
-  private Pattern range = Pattern.compile("\\[[0-9.\\-A-Za-z]+\\s*,\\s*([0-9.\\-A-Za-z]+)?\\)");
+  private Pattern range = Pattern.compile("([\\[\\(])[0-9.\\-A-Za-z]+\\s*,\\s*([0-9.\\-A-Za-z]+)?([\\)\\]])");
 
   /**
    * The project's remote repositories to use for the resolution.
@@ -116,41 +116,32 @@ public class StickyBoundsMojo
     boolean changed = false;
     for (Plugin plugin : project.getBuild().getPlugins()) {
       if ("tiles-maven-plugin".equals(plugin.getArtifactId()))
-        changed |= processTiles(plugin, pom);
+        changed |= processPlugin(plugin, pom, "tiles-maven-plugin", "tile");
 
       if ("shifty-maven-plugin".equals(plugin.getArtifactId()))
         changed |= processPlugin(plugin, pom, "shifty-maven-plugin", "artifact");
 
       if ("bounds-maven-plugin".equals(plugin.getArtifactId()))
-        changed |= processBounds(plugin, pom);
+        changed |= processPlugin(plugin, pom, "bounds-maven-plugin", "artifact");
     }
     return changed;
   }
 
-  private boolean processBounds(Plugin plugin, Document pom) {
-    getLog().info("processing bounds plugin");
-    for (String gav : lookupConfiguration("artifact", plugin))
-      getLog().info(gav);
-    return false;
-  }
-
-  private boolean processTiles(Plugin plugin, Document pom) {
-    getLog().info("processing tiles plugin");
-    for (String gav : lookupConfiguration("tile", plugin))
-      getLog().info(gav);
-    return false;
-  }
-
   private boolean processPlugin(Plugin plugin, Document pom, String pluginId, String blockElement) throws MojoExecutionException {
     getLog().info("processing " + pluginId + " plugin");
-    for (String gav : lookupConfiguration("artifact", plugin))
-      updatePluginConfiguration(pom, pluginId, "artifact", gav, updateGavBounds(gav));
-    return false;
+    boolean changed = false;
+    for (String gav : lookupConfiguration(blockElement, plugin))
+      changed |= updatePluginConfiguration(pom, pluginId, blockElement, gav, updateGavBounds(gav));
+
+    return changed;
   }
 
-  private String updateGavBounds(String gav) throws MojoExecutionException {
+  String updateGavBounds(String gav) throws MojoExecutionException {
     Artifact artifact = parseCoordinates(gav);
     Artifact u = resolveLatestVersionRange(artifact, artifact.getVersion());
+    if ("".equals(u.getExtension()))
+      return String.format("%s:%s:%s", u.getGroupId(), u.getArtifactId(), u.getVersion());
+
     return String.format("%s:%s:%s:%s:%s", u.getGroupId(), u.getArtifactId(), u.getVersion(), u.getClassifier(), u.getExtension());
   }
 
@@ -162,7 +153,7 @@ public class StickyBoundsMojo
     return new DefaultArtifact(c[0],
       c[1],
       c.length >= 4 ? c[3] : null,
-      c.length == 5 ? c[4] : "jar",
+      c.length == 5 ? c[4] : null,
       c[2]);
   }
 
@@ -264,15 +255,15 @@ public class StickyBoundsMojo
     return resolveLatestVersionRange(artifact, version);
   }
 
-  private Artifact resolveLatestVersionRange(Artifact artifact, String version) throws MojoExecutionException {
+  Artifact resolveLatestVersionRange(Artifact artifact, String version) throws MojoExecutionException {
     Matcher versionMatch = matchVersion(version);
 
     if (versionMatch.matches()) {
       Version highestVersion = highestVersion(artifact);
       String upperVersion = versionMatch.group(1) != null
-        ? versionMatch.group(1)
+        ? versionMatch.group(2)
         : "";
-      String newVersion = "[" + highestVersion.toString() + "," + upperVersion + ")";
+      String newVersion = versionMatch.group(1) + highestVersion.toString() + "," + upperVersion + versionMatch.group(3);
 
       artifact = artifact.setVersion(newVersion);
       return artifact;
@@ -334,7 +325,7 @@ public class StickyBoundsMojo
     }
   }
 
-  private Version highestVersion(Artifact artifact) throws MojoExecutionException {
+  Version highestVersion(Artifact artifact) throws MojoExecutionException {
     VersionRangeRequest request = new VersionRangeRequest(artifact, repositories, null);
     VersionRangeResult v = resolve(request);
 
@@ -375,10 +366,14 @@ public class StickyBoundsMojo
     }
   }
 
-  void updatePluginConfiguration(Document pom, String pluginId, String elementName, String gav, String newGav)
+  boolean updatePluginConfiguration(Document pom, String pluginId, String elementName, String gav, String newGav)
       throws MojoExecutionException {
+    if (gav.equals(newGav))
+      return false;
+
     XPathContext context = new XPathContext("mvn", "http://maven.apache.org/POM/4.0.0");
-    Nodes nodes = pom.query(String.format("//mvn:plugin[mvn:artifactId='%s']/mvn:configuration/mvn:%ss/mvn:%s[text()='%s']", pluginId, elementName, elementName, gav),context);
+    Nodes nodes = pom.query(String.format("//mvn:plugin[mvn:artifactId='%s']/mvn:configuration/mvn:%ss/mvn:%s[text()='%s']",
+      pluginId, elementName, elementName, gav), context);
 
     if (nodes.size() > 0) {
       final Element old = (Element) nodes.get(0);
@@ -386,6 +381,8 @@ public class StickyBoundsMojo
       artifact.appendChild(newGav);
       old.getParent().replaceChild(old, artifact);
     }
+
+    return true;
   }
 
   void updateDependency(Document pom, Artifact artifact, String oldVersion) throws MojoExecutionException {

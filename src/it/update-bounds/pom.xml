@@ -15,6 +15,9 @@
         <artifactId>bounds-maven-plugin</artifactId>
         <version>@pom.version@</version>
         <configuration>
+          <coordinates>
+            <sticky-tile-testing.version>net.stickycode.tile:sticky-tile-testing:[2,3)</sticky-tile-testing.version>
+          </coordinates>
           <artifacts>
             <artifact>net.stickycode.tile:sticky-tile-testing:[2,3)</artifact>
           </artifacts>

@@ -10,8 +10,9 @@ if (!pomFile.exists())
 
 String pom = FileUtils.fileRead( pomFile, "UTF-8" ).trim();
 
-if (pom.contains(">[2.9,3)<"))
-	return true;
-
+if (pom.contains("<artifact>net.stickycode.tile:sticky-tile-testing:[2.9,3)</artifact>")) {
+  System.err.println("Version isc [2.9,3)");
+  return true;
+}
 System.err.println("Expected version to be [2.9,3)");
 return false;

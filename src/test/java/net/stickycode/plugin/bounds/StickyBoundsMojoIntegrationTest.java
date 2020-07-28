@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.version.Version;
 import org.junit.Test;
 
 import nu.xom.Builder;
@@ -27,8 +28,13 @@ public class StickyBoundsMojoIntegrationTest {
   @Test
   public void matchVersionRanges() {
     StickyBoundsMojo mojo = new StickyBoundsMojo();
+    assertThat(mojo.matchVersion("1.0").matches()).isFalse();
+    assertThat(mojo.matchVersion("1").matches()).isFalse();
     assertThat(mojo.matchVersion("1.0,2").matches()).isFalse();
-    assertThat(mojo.matchVersion("[1.0,2]").matches()).isFalse();
+
+    assertThat(mojo.matchVersion("(1.0,2)").matches()).isTrue();
+    assertThat(mojo.matchVersion("(1.0,2]").matches()).isTrue();
+    assertThat(mojo.matchVersion("[1.0,2]").matches()).isTrue();
     assertThat(mojo.matchVersion("[1.0,2)").matches()).isTrue();
     assertThat(mojo.matchVersion("[1.0,2.0)").matches()).isTrue();
     assertThat(mojo.matchVersion("[1.0,)").matches()).isTrue();
@@ -41,6 +47,34 @@ public class StickyBoundsMojoIntegrationTest {
   }
 
   @Test
+  public void bounds() throws MojoExecutionException {
+    StickyBoundsMojo mojo = new StickyBoundsMojo() {
+
+      @Override
+      Version highestVersion(Artifact artifact) throws MojoExecutionException {
+        return new Version() {
+
+          @Override
+          public int compareTo(Version o) {
+            return 0;
+          }
+
+          @Override
+          public String toString() {
+            return "2.5";
+          }
+        };
+      }
+    };
+    assertThat(mojo.updateGavBounds("net.stickycode.tile:sticky-tile-testing:[2,3)"))
+      .isEqualTo("net.stickycode.tile:sticky-tile-testing:[2.5,3)");
+    assertThat(mojo.updateGavBounds("net.stickycode.tile:sticky-tile-testing:[2,3):things:zip"))
+      .isEqualTo("net.stickycode.tile:sticky-tile-testing:[2.5,3):things:zip");
+    assertThat(mojo.updateGavBounds("net.stickycode.tile:sticky-tile-testing:[2,3]:things:zip"))
+      .isEqualTo("net.stickycode.tile:sticky-tile-testing:[2.5,3]:things:zip");
+  }
+
+  @Test
   public void updateShiftyPlugin()
       throws ValidityException, ParsingException, IOException, MojoExecutionException {
     XPathContext context = new XPathContext("mvn", "http://maven.apache.org/POM/4.0.0");
@@ -50,7 +84,8 @@ public class StickyBoundsMojoIntegrationTest {
     assertThat(before.size()).isEqualTo(1);
     assertThat(before.get(0).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[2,3)");
 
-    new StickyBoundsMojo().updatePluginConfiguration(pom, "shifty-maven-plugin", "artifact", "net.stickycode.tile:sticky-tile-testing:[2,3)", "net.stickycode.tile:sticky-tile-testing:[2.1,3)");
+    new StickyBoundsMojo().updatePluginConfiguration(pom, "shifty-maven-plugin", "artifact",
+      "net.stickycode.tile:sticky-tile-testing:[2,3)", "net.stickycode.tile:sticky-tile-testing:[2.1,3)");
 
     Nodes after = pom.query("//mvn:artifact", context);
     assertThat(after.size()).isEqualTo(1);
@@ -67,9 +102,28 @@ public class StickyBoundsMojoIntegrationTest {
     assertThat(before.size()).isEqualTo(1);
     assertThat(before.get(0).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[2,3)");
 
-    new StickyBoundsMojo().updatePluginConfiguration(pom, "bounds-maven-plugin", "artifact", "net.stickycode.tile:sticky-tile-testing:[2,3)", "net.stickycode.tile:sticky-tile-testing:[2.1,3)");
+    new StickyBoundsMojo().updatePluginConfiguration(pom, "bounds-maven-plugin", "artifact",
+      "net.stickycode.tile:sticky-tile-testing:[2,3)", "net.stickycode.tile:sticky-tile-testing:[2.1,3)");
 
     Nodes after = pom.query("//mvn:artifact", context);
+    assertThat(after.size()).isEqualTo(1);
+    assertThat(after.get(0).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[2.1,3)");
+  }
+
+  @Test
+  public void updateTilesPlugin()
+      throws ValidityException, ParsingException, IOException, MojoExecutionException {
+    XPathContext context = new XPathContext("mvn", "http://maven.apache.org/POM/4.0.0");
+    Document pom = new Builder().build(new File(new File("src/it/update-tiles"), "pom.xml"));
+
+    Nodes before = pom.query("//mvn:tile", context);
+    assertThat(before.size()).isEqualTo(1);
+    assertThat(before.get(0).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[2,3)");
+
+    new StickyBoundsMojo().updatePluginConfiguration(pom, "tiles-maven-plugin", "tile",
+      "net.stickycode.tile:sticky-tile-testing:[2,3)", "net.stickycode.tile:sticky-tile-testing:[2.1,3)");
+
+    Nodes after = pom.query("//mvn:tile", context);
     assertThat(after.size()).isEqualTo(1);
     assertThat(after.get(0).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[2.1,3)");
   }
@@ -146,7 +200,9 @@ public class StickyBoundsMojoIntegrationTest {
   public void writeNamespacesUnchanged()
       throws ValidityException, ParsingException, IOException {
     Document pom = new Builder().build(new File(new File("src/it/update"), "pom.xml"));
-    Serializer s = new StickySerializer(new FileOutputStream(new File("target/tmp.xml")), "UTF-8");
+    File file = new File("target/tmp.xml");
+    file.getParentFile().mkdirs();
+    Serializer s = new StickySerializer(new FileOutputStream(file), "UTF-8");
     s.write(pom);
   }
 }

@@ -19,6 +19,19 @@
             <artifact>net.stickycode.tile:sticky-tile-testing:[2,3)</artifact>
           </artifacts>
         </configuration>
+        <executions>
+          <execution>
+            <phase>verify</phase>
+            <goals>
+              <goal>fetch</goal>
+            </goals>
+            <configuration>
+              <artifacts>
+                <artifact>net.stickycode.tile:sticky-tile-testing:[1,2)</artifact>
+              </artifacts>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>

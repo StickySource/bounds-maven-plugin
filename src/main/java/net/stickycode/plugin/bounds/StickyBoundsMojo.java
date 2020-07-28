@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Plugin;
+import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
@@ -136,10 +137,13 @@ public class StickyBoundsMojo
     return changed;
   }
 
-  String updateGavBounds(String gav) throws MojoExecutionException {
+  Artifact updateGavBounds(String gav) throws MojoExecutionException {
     Artifact artifact = parseCoordinates(gav);
-    Artifact u = resolveLatestVersionRange(artifact, artifact.getVersion());
-    if ("".equals(u.getExtension()))
+    return resolveLatestVersionRange(artifact, artifact.getVersion());
+  }
+
+  private String artifactToGav(Artifact u) {
+    if ("".equals(u.getClassifier()))
       return String.format("%s:%s:%s", u.getGroupId(), u.getArtifactId(), u.getVersion());
 
     return String.format("%s:%s:%s:%s:%s", u.getGroupId(), u.getArtifactId(), u.getVersion(), u.getClassifier(), u.getExtension());
@@ -159,7 +163,16 @@ public class StickyBoundsMojo
 
   private List<String> lookupConfiguration(String name, Plugin plugin) {
     List<String> gavs = new ArrayList<>();
-    Xpp3Dom configuration = (Xpp3Dom) plugin.getConfiguration();
+    processConfiguration(name, gavs, (Xpp3Dom) plugin.getConfiguration());
+
+    for (PluginExecution execution : plugin.getExecutions()) {
+      processConfiguration(name, gavs, (Xpp3Dom) execution.getConfiguration());
+    }
+
+    return gavs;
+  }
+
+  private void processConfiguration(String name, List<String> gavs, Xpp3Dom configuration) {
     if (configuration != null) {
       Xpp3Dom[] children = configuration.getChildren(name + "s");
       if (children != null)
@@ -168,7 +181,6 @@ public class StickyBoundsMojo
             gavs.add(element.getValue());
         }
     }
-    return gavs;
   }
 
   private boolean processDependencyManagement(Document pom)
@@ -366,13 +378,14 @@ public class StickyBoundsMojo
     }
   }
 
-  boolean updatePluginConfiguration(Document pom, String pluginId, String elementName, String gav, String newGav)
+  boolean updatePluginConfiguration(Document pom, String pluginId, String elementName, String gav, Artifact newArtifact)
       throws MojoExecutionException {
+    String newGav = artifactToGav(newArtifact);
     if (gav.equals(newGav))
       return false;
 
     XPathContext context = new XPathContext("mvn", "http://maven.apache.org/POM/4.0.0");
-    Nodes nodes = pom.query(String.format("//mvn:plugin[mvn:artifactId='%s']/mvn:configuration/mvn:%ss/mvn:%s[text()='%s']",
+    Nodes nodes = pom.query(String.format("//mvn:plugin[mvn:artifactId='%s']//mvn:configuration/mvn:%ss/mvn:%s[text()='%s']",
       pluginId, elementName, elementName, gav), context);
 
     if (nodes.size() > 0) {
@@ -380,6 +393,7 @@ public class StickyBoundsMojo
       Element artifact = new Element(elementName, "http://maven.apache.org/POM/4.0.0");
       artifact.appendChild(newGav);
       old.getParent().replaceChild(old, artifact);
+      getLog().info("updating " + pluginId + " " + elementName + " to " + newArtifact.getVersion() + " from " + gav);
     }
 
     return true;

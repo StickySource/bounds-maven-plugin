@@ -81,15 +81,19 @@ public class StickyBoundsMojoIntegrationTest {
     Document pom = new Builder().build(new File(new File("src/it/update-shifty"), "pom.xml"));
 
     Nodes before = pom.query("//mvn:artifact", context);
-    assertThat(before.size()).isEqualTo(1);
+    assertThat(before.size()).isEqualTo(2);
     assertThat(before.get(0).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[2,3)");
+    assertThat(before.get(1).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[1,2)");
 
     new StickyBoundsMojo().updatePluginConfiguration(pom, "shifty-maven-plugin", "artifact",
-      "net.stickycode.tile:sticky-tile-testing:[2,3)", "net.stickycode.tile:sticky-tile-testing:[2.1,3)");
+      "net.stickycode.tile:sticky-tile-testing:[2,3)", new DefaultArtifact("net.stickycode.tile:sticky-tile-testing:[2.1,3)"));
+    new StickyBoundsMojo().updatePluginConfiguration(pom, "shifty-maven-plugin", "artifact",
+      "net.stickycode.tile:sticky-tile-testing:[1,2)", new DefaultArtifact("net.stickycode.tile:sticky-tile-testing:[1.9,2)"));
 
     Nodes after = pom.query("//mvn:artifact", context);
-    assertThat(after.size()).isEqualTo(1);
+    assertThat(after.size()).isEqualTo(2);
     assertThat(after.get(0).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[2.1,3)");
+    assertThat(after.get(1).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[1.9,2)");
   }
 
   @Test
@@ -99,15 +103,19 @@ public class StickyBoundsMojoIntegrationTest {
     Document pom = new Builder().build(new File(new File("src/it/update-bounds"), "pom.xml"));
 
     Nodes before = pom.query("//mvn:artifact", context);
-    assertThat(before.size()).isEqualTo(1);
+    assertThat(before.size()).isEqualTo(2);
     assertThat(before.get(0).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[2,3)");
+    assertThat(before.get(1).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[1,2)");
 
     new StickyBoundsMojo().updatePluginConfiguration(pom, "bounds-maven-plugin", "artifact",
-      "net.stickycode.tile:sticky-tile-testing:[2,3)", "net.stickycode.tile:sticky-tile-testing:[2.1,3)");
+      "net.stickycode.tile:sticky-tile-testing:[2,3)", new DefaultArtifact("net.stickycode.tile:sticky-tile-testing:[2.1,3)"));
+    new StickyBoundsMojo().updatePluginConfiguration(pom, "bounds-maven-plugin", "artifact",
+      "net.stickycode.tile:sticky-tile-testing:[1,2)", new DefaultArtifact("net.stickycode.tile:sticky-tile-testing:[1.9,2)"));
 
     Nodes after = pom.query("//mvn:artifact", context);
-    assertThat(after.size()).isEqualTo(1);
+    assertThat(after.size()).isEqualTo(2);
     assertThat(after.get(0).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[2.1,3)");
+    assertThat(after.get(1).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[1.9,2)");
   }
 
   @Test
@@ -117,15 +125,19 @@ public class StickyBoundsMojoIntegrationTest {
     Document pom = new Builder().build(new File(new File("src/it/update-tiles"), "pom.xml"));
 
     Nodes before = pom.query("//mvn:tile", context);
-    assertThat(before.size()).isEqualTo(1);
+    assertThat(before.size()).isEqualTo(2);
     assertThat(before.get(0).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[2,3)");
+    assertThat(before.get(1).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[1,2)");
 
     new StickyBoundsMojo().updatePluginConfiguration(pom, "tiles-maven-plugin", "tile",
-      "net.stickycode.tile:sticky-tile-testing:[2,3)", "net.stickycode.tile:sticky-tile-testing:[2.1,3)");
+      "net.stickycode.tile:sticky-tile-testing:[2,3)", new DefaultArtifact("net.stickycode.tile:sticky-tile-testing:[2.1,3)"));
+    new StickyBoundsMojo().updatePluginConfiguration(pom, "tiles-maven-plugin", "tile",
+      "net.stickycode.tile:sticky-tile-testing:[1,2)", new DefaultArtifact("net.stickycode.tile:sticky-tile-testing:[1.9,2)"));
 
     Nodes after = pom.query("//mvn:tile", context);
-    assertThat(after.size()).isEqualTo(1);
+    assertThat(after.size()).isEqualTo(2);
     assertThat(after.get(0).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[2.1,3)");
+    assertThat(after.get(1).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[1.9,2)");
   }
 
   @Test

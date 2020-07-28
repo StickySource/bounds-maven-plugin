@@ -29,6 +29,20 @@
               <goal>update</goal>
             </goals>
           </execution>
+          <execution>
+            <phase>test</phase>
+            <goals>
+              <goal>update</goal>
+            </goals>
+            <configuration>
+              <coordinates>
+                <sticky-tile-testing.version>net.stickycode.tile:sticky-tile-testing:[1,2)</sticky-tile-testing.version>
+              </coordinates>
+              <artifacts>
+                <artifact>net.stickycode.tile:sticky-tile-testing:[1,2)</artifact>
+              </artifacts>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
 

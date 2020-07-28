@@ -19,6 +19,16 @@
             <tile>net.stickycode.tile:sticky-tile-testing:[2,3)</tile>
           </tiles>
         </configuration>
+        <executions>
+          <execution>
+            <phase>verify</phase>
+            <configuration>
+              <tiles>
+                <tile>net.stickycode.tile:sticky-tile-testing:[1,2)</tile>
+              </tiles>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>

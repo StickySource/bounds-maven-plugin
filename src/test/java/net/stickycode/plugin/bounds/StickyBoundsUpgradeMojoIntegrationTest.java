@@ -1,6 +1,6 @@
 package net.stickycode.plugin.bounds;
 
-import static org.assertj.core.api.StrictAssertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -69,7 +69,7 @@ public class StickyBoundsUpgradeMojoIntegrationTest {
     assertThat(mojo.resolveLatestVersionRange(dependency, "[2.2,5)").getVersion()).isEqualTo("[6.7,7)");
     assertThat(mojo.resolveLatestVersionRange(dependency, "[6.7,7)").getVersion()).isEqualTo("[6.7,7)");
   }
-  
+
   @Test
   public void bump()
       throws ValidityException, ParsingException, IOException, MojoExecutionException {
@@ -79,12 +79,12 @@ public class StickyBoundsUpgradeMojoIntegrationTest {
 
     Nodes versions = pom.query("/mvn:project/mvn:version", context);
     assertThat(versions.size()).isEqualTo(1);
-    
+
     assertThat(pom.query("/mvn:project/mvn:version[text()='1.1-SNAPSHOT']", context).size()).isEqualTo(1);
     assertThat(pom.query("/mvn:project/mvn:version[text()='2.1-SNAPSHOT']", context).size()).isEqualTo(0);
-    
+
     new StickyBoundsUpgradeMojo().bumpMajorVersion(pom);
-    
+
     assertThat(pom.query("/mvn:project/mvn:version[text()='1.1-SNAPSHOT']", context).size()).isEqualTo(0);
     assertThat(pom.query("/mvn:project/mvn:version[text()='2.1-SNAPSHOT']", context).size()).isEqualTo(1);
   }

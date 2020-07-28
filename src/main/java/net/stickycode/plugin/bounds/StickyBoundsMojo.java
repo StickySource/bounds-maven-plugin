@@ -112,14 +112,14 @@ public class StickyBoundsMojo
     }
   }
 
-  boolean processPlugins(Document pom) {
+  boolean processPlugins(Document pom) throws MojoExecutionException {
     boolean changed = false;
     for (Plugin plugin : project.getBuild().getPlugins()) {
       if ("tiles-maven-plugin".equals(plugin.getArtifactId()))
         changed |= processTiles(plugin, pom);
 
       if ("shifty-maven-plugin".equals(plugin.getArtifactId()))
-        changed |= processShifty(plugin, pom);
+        changed |= processPlugin(plugin, pom, "shifty-maven-plugin", "artifact");
 
       if ("bounds-maven-plugin".equals(plugin.getArtifactId()))
         changed |= processBounds(plugin, pom);
@@ -128,30 +128,55 @@ public class StickyBoundsMojo
   }
 
   private boolean processBounds(Plugin plugin, Document pom) {
+    getLog().info("processing bounds plugin");
     for (String gav : lookupConfiguration("artifact", plugin))
       getLog().info(gav);
     return false;
   }
 
-
   private boolean processTiles(Plugin plugin, Document pom) {
+    getLog().info("processing tiles plugin");
     for (String gav : lookupConfiguration("tile", plugin))
       getLog().info(gav);
     return false;
   }
 
-  private boolean processShifty(Plugin plugin, Document pom) {
+  private boolean processPlugin(Plugin plugin, Document pom, String pluginId, String blockElement) throws MojoExecutionException {
+    getLog().info("processing " + pluginId + " plugin");
     for (String gav : lookupConfiguration("artifact", plugin))
-      getLog().info(gav);
+      updatePluginConfiguration(pom, pluginId, "artifact", gav, updateGavBounds(gav));
     return false;
+  }
+
+  private String updateGavBounds(String gav) throws MojoExecutionException {
+    Artifact artifact = parseCoordinates(gav);
+    Artifact u = resolveLatestVersionRange(artifact, artifact.getVersion());
+    return String.format("%s:%s:%s:%s:%s", u.getGroupId(), u.getArtifactId(), u.getVersion(), u.getClassifier(), u.getExtension());
+  }
+
+  Artifact parseCoordinates(String gav) {
+    String[] c = gav.split(":");
+    if (c.length < 3)
+      throw new RuntimeException("Invalid gav:" + gav);
+
+    return new DefaultArtifact(c[0],
+      c[1],
+      c.length >= 4 ? c[3] : null,
+      c.length == 5 ? c[4] : "jar",
+      c[2]);
   }
 
   private List<String> lookupConfiguration(String name, Plugin plugin) {
     List<String> gavs = new ArrayList<>();
-    for (Xpp3Dom list : ((Xpp3Dom) plugin.getConfiguration()).getChildren(name))
-      for (Xpp3Dom element : list.getChildren(name))
-        gavs.add(element.getValue());
-
+    Xpp3Dom configuration = (Xpp3Dom) plugin.getConfiguration();
+    if (configuration != null) {
+      Xpp3Dom[] children = configuration.getChildren(name + "s");
+      if (children != null)
+        for (Xpp3Dom list : children) {
+          for (Xpp3Dom element : list.getChildren(name))
+            gavs.add(element.getValue());
+        }
+    }
     return gavs;
   }
 
@@ -234,12 +259,15 @@ public class StickyBoundsMojo
   }
 
   private Artifact resolveLatestVersionRange(Dependency dependency, String version) throws MojoExecutionException {
-    Matcher versionMatch = matchVersion(version);
     Artifact artifact = new DefaultArtifact(dependency.getGroupId(), dependency.getArtifactId(),
       dependency.getClassifier(), dependency.getType(), version);
+    return resolveLatestVersionRange(artifact, version);
+  }
+
+  private Artifact resolveLatestVersionRange(Artifact artifact, String version) throws MojoExecutionException {
+    Matcher versionMatch = matchVersion(version);
 
     if (versionMatch.matches()) {
-
       Version highestVersion = highestVersion(artifact);
       String upperVersion = versionMatch.group(1) != null
         ? versionMatch.group(1)
@@ -344,6 +372,19 @@ public class StickyBoundsMojo
           propertiesElement.replaceChild(property, newRange);
         }
       }
+    }
+  }
+
+  void updatePluginConfiguration(Document pom, String pluginId, String elementName, String gav, String newGav)
+      throws MojoExecutionException {
+    XPathContext context = new XPathContext("mvn", "http://maven.apache.org/POM/4.0.0");
+    Nodes nodes = pom.query(String.format("//mvn:plugin[mvn:artifactId='%s']/mvn:configuration/mvn:%ss/mvn:%s[text()='%s']", pluginId, elementName, elementName, gav),context);
+
+    if (nodes.size() > 0) {
+      final Element old = (Element) nodes.get(0);
+      Element artifact = new Element(elementName, "http://maven.apache.org/POM/4.0.0");
+      artifact.appendChild(newGav);
+      old.getParent().replaceChild(old, artifact);
     }
   }
 

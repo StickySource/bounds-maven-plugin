@@ -38,7 +38,7 @@
     <dependency>
       <groupId>net.stickycode.composite</groupId>
       <artifactId>sticky-composite-unittest</artifactId>
-      <version>[3.7,4)</version>
+      <version>[4,5)</version>
       <scope>test</scope>
     </dependency>
 

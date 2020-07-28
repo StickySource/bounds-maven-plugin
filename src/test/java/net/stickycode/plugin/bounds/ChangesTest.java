@@ -1,6 +1,6 @@
 package net.stickycode.plugin.bounds;
 
-import static org.assertj.core.api.StrictAssertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 

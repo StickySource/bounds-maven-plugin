@@ -1,6 +1,6 @@
 package net.stickycode.plugin.bounds;
 
-import static org.assertj.core.api.StrictAssertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -38,6 +38,40 @@ public class StickyBoundsMojoIntegrationTest {
     assertThat(mojo.matchVersion("[1.0.4 , 2.3.4)").matches()).isTrue();
     assertThat(mojo.matchVersion("[1.0.4 ,2.3.4)").matches()).isTrue();
     assertThat(mojo.matchVersion("[1.0.4-SNAPSHOT,2.3.4-SNAPSHOT)").matches()).isTrue();
+  }
+
+  @Test
+  public void updateShiftyPlugin()
+      throws ValidityException, ParsingException, IOException, MojoExecutionException {
+    XPathContext context = new XPathContext("mvn", "http://maven.apache.org/POM/4.0.0");
+    Document pom = new Builder().build(new File(new File("src/it/update-shifty"), "pom.xml"));
+
+    Nodes before = pom.query("//mvn:artifact", context);
+    assertThat(before.size()).isEqualTo(1);
+    assertThat(before.get(0).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[2,3)");
+
+    new StickyBoundsMojo().updatePluginConfiguration(pom, "shifty-maven-plugin", "artifact", "net.stickycode.tile:sticky-tile-testing:[2,3)", "net.stickycode.tile:sticky-tile-testing:[2.1,3)");
+
+    Nodes after = pom.query("//mvn:artifact", context);
+    assertThat(after.size()).isEqualTo(1);
+    assertThat(after.get(0).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[2.1,3)");
+  }
+
+  @Test
+  public void updateBoundsPlugin()
+      throws ValidityException, ParsingException, IOException, MojoExecutionException {
+    XPathContext context = new XPathContext("mvn", "http://maven.apache.org/POM/4.0.0");
+    Document pom = new Builder().build(new File(new File("src/it/update-bounds"), "pom.xml"));
+
+    Nodes before = pom.query("//mvn:artifact", context);
+    assertThat(before.size()).isEqualTo(1);
+    assertThat(before.get(0).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[2,3)");
+
+    new StickyBoundsMojo().updatePluginConfiguration(pom, "bounds-maven-plugin", "artifact", "net.stickycode.tile:sticky-tile-testing:[2,3)", "net.stickycode.tile:sticky-tile-testing:[2.1,3)");
+
+    Nodes after = pom.query("//mvn:artifact", context);
+    assertThat(after.size()).isEqualTo(1);
+    assertThat(after.get(0).getValue()).isEqualTo("net.stickycode.tile:sticky-tile-testing:[2.1,3)");
   }
 
   @Test

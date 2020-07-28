@@ -12,22 +12,16 @@
     <plugins>
       <plugin>
         <groupId>net.stickycode.plugins</groupId>
-        <artifactId>shifty-maven-plugin</artifactId>
-        <version>1.5</version>
+        <artifactId>bounds-maven-plugin</artifactId>
+        <version>@pom.version@</version>
         <configuration>
           <artifacts>
             <artifact>net.stickycode.tile:sticky-tile-testing:[2,3)</artifact>
           </artifacts>
         </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>net.stickycode.plugins</groupId>
-        <artifactId>bounds-maven-plugin</artifactId>
-        <version>@pom.version@</version>
         <executions>
           <execution>
-            <phase>generate-resources</phase>
+            <phase>test</phase>
             <goals>
               <goal>update</goal>
             </goals>

@@ -52,26 +52,26 @@ public class StickyNextVersionMojoTest {
   }
 
   private void checkIncrementMajor(String version, String expectation) {
-    checkIncrement(version, expectation, VersionIncrement.major);
+    checkIncrement(version, expectation, VersionIncrementRule.major);
   }
 
   private void checkIncrementMinor(String version, String expectation) {
-    checkIncrement(version, expectation, VersionIncrement.minor);
+    checkIncrement(version, expectation, VersionIncrementRule.minor);
   }
 
   private void checkIncrementPatch(String version, String expectation) {
-    checkIncrement(version, expectation, VersionIncrement.patch);
+    checkIncrement(version, expectation, VersionIncrementRule.patch);
   }
 
   private void checkIncrementPatchDatetime(String version, String expectation) {
-    checkIncrement(version, expectation, VersionIncrement.patchDatetime);
+    checkIncrement(version, expectation, VersionIncrementRule.patchDatetime);
   }
 
-  private void checkIncrement(String version, String expectation, VersionIncrement versionIncrement) {
+  private void checkIncrement(String version, String expectation, VersionIncrementRule versionIncrement) {
     StickyNextVersionMojo mojo = new StickyNextVersionMojo() {
 
       @Override
-      VersionIncrement getVersionIncrement() {
+      VersionIncrementRule getVersionIncrement() {
         return versionIncrement;
       }
 
@@ -118,26 +118,26 @@ public class StickyNextVersionMojoTest {
   }
 
   private void checkRangeMajor(String version, String expectation) {
-    checkRange(version, expectation, VersionIncrement.major);
+    checkRange(version, expectation, VersionIncrementRule.major);
   }
 
   private void checkRangeMinor(String version, String expectation) {
-    checkRange(version, expectation, VersionIncrement.minor);
+    checkRange(version, expectation, VersionIncrementRule.minor);
   }
 
   private void checkRangePatch(String version, String expectation) {
-    checkRange(version, expectation, VersionIncrement.patch);
+    checkRange(version, expectation, VersionIncrementRule.patch);
   }
 
   private void checkRangePatchDatetime(String version, String expectation) {
-    checkRange(version, expectation, VersionIncrement.patchDatetime);
+    checkRange(version, expectation, VersionIncrementRule.patchDatetime);
   }
 
-  private void checkRange(String version, String expectation, VersionIncrement versionIncrement) {
+  private void checkRange(String version, String expectation, VersionIncrementRule versionIncrement) {
     StickyNextVersionMojo mojo = new StickyNextVersionMojo() {
 
       @Override
-      VersionIncrement getVersionIncrement() {
+      VersionIncrementRule getVersionIncrement() {
         return versionIncrement;
       }
     };

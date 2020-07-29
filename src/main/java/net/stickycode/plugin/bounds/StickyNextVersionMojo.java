@@ -23,6 +23,7 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.VersionRangeRequest;
 import org.eclipse.aether.resolution.VersionRangeResolutionException;
 import org.eclipse.aether.resolution.VersionRangeResult;
+import org.eclipse.aether.transfer.MetadataNotFoundException;
 import org.eclipse.aether.version.Version;
 
 @Mojo(name = "next-version", threadSafe = true, defaultPhase = LifecyclePhase.VALIDATE)
@@ -100,9 +101,9 @@ public class StickyNextVersionMojo
   String nextVersion(String projectVersion) {
     String versionRange = versionRange(projectVersion);
 
-    Version version = highestVersion(versionRange);
+    String version = highestVersion(versionRange);
 
-    return increment(version.toString());
+    return increment(version);
   }
 
   /**
@@ -169,7 +170,7 @@ public class StickyNextVersionMojo
   /**
    * Get the highest previously released for the current project within the selected increment rule
    */
-  Version highestVersion(String versionRange) {
+  String highestVersion(String versionRange) {
     DefaultArtifact artifact = projectArtifact(versionRange);
 
     VersionRangeRequest request = new VersionRangeRequest(artifact, repositories, null);
@@ -185,14 +186,42 @@ public class StickyNextVersionMojo
       v.setVersions(filtered);
     }
 
-    if (v.getHighestVersion() == null) {
-      throw (v.getExceptions().isEmpty())
-        ? new RuntimeException("Failed to resolve " + artifact.toString())
-        : new RuntimeException("Failed to resolve " + artifact.toString(), v.getExceptions().get(0));
+    if (v.getHighestVersion() != null) {
+      log("resolved %s:%s:%s to %s", artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), v.getHighestVersion());
+      return v.getHighestVersion().toString();
     }
 
-    log("resolved %s:%s:%s to %s", artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), v.getHighestVersion());
-    return v.getHighestVersion();
+    // could not find a version in the range, could be others outside of the range
+    if (v.getExceptions().isEmpty())
+      return deriveDefaultVersion(versionRange);
+
+    // this means there are literally no values
+    if (v.getExceptions().get(0) instanceof MetadataNotFoundException)
+      return deriveDefaultVersion(versionRange);
+
+    // There was an error resolving, e.g. auth failure, network failure, misconfiguration
+    throw new RuntimeException("Failed to resolve " + artifact.toString(), v.getExceptions().get(0));
+  }
+
+  /** Derive a default version from the range when we do not get any results for the resolution */
+  String deriveDefaultVersion(String versionRange) {
+    String[] components = versionRange.split("[\\[,\\.]");
+    switch (getVersionIncrement()) {
+      case major:
+        return String.valueOf(Long.valueOf(components[1]) - 1);
+
+      case minor:
+        return components[1] + ".0";
+
+      case patch:
+        return components[1] + ".1";
+
+      case patchDatetime:
+        return components[1] + ".1";
+
+    }
+
+    throw new RuntimeException("Unknown version increment " + getVersionIncrement());
   }
 
   boolean ignoreSnapshots() {

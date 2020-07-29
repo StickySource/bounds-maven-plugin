@@ -11,8 +11,8 @@ if (!logFile.exists())
 
 String log = FileUtils.fileRead( logFile, "UTF-8" ).trim();
 
-if (!log.contains("set project version to 1.1")) {
-  System.err.println("Expected 'set project version to 1.1'");
+if (!log.contains("set project version to 2.1")) {
+  System.err.println("Expected 'set project version to 2.1'");
   return false;
 }
 

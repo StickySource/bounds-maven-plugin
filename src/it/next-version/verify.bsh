@@ -3,16 +3,22 @@ import java.util.*;
 
 import org.codehaus.plexus.util.*;
 
-File pomFile = new File( basedir, "build.log" );
-System.out.println( "Checking for existence of first test file: " + pomFile );
-if (!pomFile.exists())
-  throw new RuntimeException(pomFile.toString() + " not found" );
+File logFile = new File( basedir, "build.log" );
+System.out.println( "Checking for existence of first test file: " + logFile );
+if (!logFile.exists())
+  throw new RuntimeException(logFile.toString() + " not found" );
 
 
-String pom = FileUtils.fileRead( pomFile, "UTF-8" ).trim();
+String log = FileUtils.fileRead( logFile, "UTF-8" ).trim();
 
-if (pom.contains("resolved net.stickycode:sticky-coercion:jar:[2,3] to 2.7"))
-	return true;
+if (!log.contains("resolved net.stickycode.deploy.sample:sticky-deployer-sample-helloworld:[1,2) to 1.4")) {
+  System.err.println("Expected 'resolved net.stickycode.deploy.sample:sticky-deployer-sample-helloworld:[1,2) to 1.4'");
+  return false;
+}
 
-System.err.println("Expected version to be 2.7");
-return false;
+if (!log.contains("set project version to 1.5")) {
+  System.err.println("Expected 'set project version to 1.5'");
+  return false;
+}
+
+return true;

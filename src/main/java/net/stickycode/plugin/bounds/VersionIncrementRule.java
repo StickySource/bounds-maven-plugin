@@ -1,6 +1,6 @@
 package net.stickycode.plugin.bounds;
 
-public enum VersionIncrement {
+public enum VersionIncrementRule {
   major,
   minor,
   patch,

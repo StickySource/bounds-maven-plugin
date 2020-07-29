@@ -4,6 +4,7 @@ import static java.lang.Integer.valueOf;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.maven.execution.MavenSession;
@@ -44,12 +45,12 @@ public class StickyNextVersionMojo
    * </dl>
    */
   @Parameter(defaultValue = "minor", required = true)
-  private VersionIncrement versionIncrement = VersionIncrement.minor;
+  private VersionIncrementRule incrementRule = VersionIncrementRule.minor;
 
   /**
-   * The name of the property in the session to set to the next value
+   * The name of the property in the session to set to the next version
    */
-  @Parameter(defaultValue = "nextVersion", required = true)
+  @Parameter
   private String nextVersionProperty;
 
   /**
@@ -57,6 +58,9 @@ public class StickyNextVersionMojo
    */
   @Parameter(defaultValue = "true", required = true)
   private boolean updateProjectVersion;
+
+  @Parameter(defaultValue = "false")
+  private Boolean includeSnapshots = false;
 
   /**
    * The current repository/network configuration of Maven.
@@ -81,8 +85,10 @@ public class StickyNextVersionMojo
       throws MojoExecutionException, MojoFailureException {
     String nextVersion = nextVersion(project.getVersion());
 
-    project.getProperties().setProperty(nextVersionProperty, nextVersion);
-    log("set %s to %s", nextVersionProperty, nextVersion);
+    if (nextVersionProperty != null) {
+      project.getProperties().setProperty(nextVersionProperty, nextVersion);
+      log("set property %s to %s", nextVersionProperty, nextVersion);
+    }
 
     if (updateProjectVersion) {
       project.setVersion(nextVersion);
@@ -96,12 +102,14 @@ public class StickyNextVersionMojo
 
     Version version = highestVersion(versionRange);
 
-    String nextVersion = increment(version.toString());
-    return nextVersion;
+    return increment(version.toString());
   }
 
+  /**
+   * Increment the given version based on the selected rule
+   */
   String increment(String version) {
-    String[] components = version.toString().split("\\.");
+    String[] components = version.toString().replaceFirst("-SNAPSHOT", "").split("[-\\.]");
     switch (getVersionIncrement()) {
       case major:
         return String.join(".", Integer.toString(valueOf(components[0]) + 1), "1");
@@ -123,42 +131,59 @@ public class StickyNextVersionMojo
           return String.join(".", components[0], "1", Long.toString(Instant.now(getClock()).getEpochSecond()));
 
         return String.join(".", components[0], components[1], Long.toString(Instant.now(getClock()).getEpochSecond()));
-
     }
 
     throw new RuntimeException("Unknown version increment " + getVersionIncrement());
   }
 
-  VersionIncrement getVersionIncrement() {
-    return versionIncrement;
+  VersionIncrementRule getVersionIncrement() {
+    return incrementRule;
   }
 
   Clock getClock() {
     return Clock.systemDefaultZone();
   }
 
+  /**
+   * Derive the relevant range to search for to facilitate the correct increment based on the selected rule
+   */
   String versionRange(String version) {
     String[] components = version.toString().split("[-\\.]");
     switch (getVersionIncrement()) {
       case major:
         return "[" + components[0] + ",)";
+
       case minor:
         return "[" + components[0] + "," + (valueOf(components[0]) + 1) + ")";
+
       case patch:
         return "[" + components[0] + "." + components[1] + "," + components[0] + "." + (valueOf(components[1]) + 1) + ")";
+
       case patchDatetime:
         return "[" + components[0] + "," + (valueOf(components[0]) + 1) + ")";
-
     }
 
     throw new RuntimeException("Unknown version increment " + getVersionIncrement());
   }
 
+  /**
+   * Get the highest previously released for the current project within the selected increment rule
+   */
   Version highestVersion(String versionRange) {
     DefaultArtifact artifact = projectArtifact(versionRange);
 
     VersionRangeRequest request = new VersionRangeRequest(artifact, repositories, null);
     VersionRangeResult v = resolve(request);
+
+    if (ignoreSnapshots()) {
+      List<Version> filtered = new ArrayList<Version>();
+      for (Version aVersion : v.getVersions()) {
+        if (!aVersion.toString().endsWith("SNAPSHOT")) {
+          filtered.add(aVersion);
+        }
+      }
+      v.setVersions(filtered);
+    }
 
     if (v.getHighestVersion() == null) {
       throw (v.getExceptions().isEmpty())
@@ -170,6 +195,11 @@ public class StickyNextVersionMojo
     return v.getHighestVersion();
   }
 
+  boolean ignoreSnapshots() {
+    return !includeSnapshots;
+  }
+
+  /** Get the artifact representing this project **/
   DefaultArtifact projectArtifact(String versionRange) {
     DefaultArtifact artifact = new DefaultArtifact(
       project.getGroupId(),

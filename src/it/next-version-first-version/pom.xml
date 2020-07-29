@@ -8,7 +8,7 @@
   <version>1.999-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <description>Check what happens when we get the next version when there isn't on</description>
+  <description>Check what happens when we get the next version when there isn't one</description>
 
   <build>
     <plugins>

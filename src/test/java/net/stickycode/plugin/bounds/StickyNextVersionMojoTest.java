@@ -2,63 +2,138 @@ package net.stickycode.plugin.bounds;
 
 import static org.assertj.core.api.StrictAssertions.assertThat;
 
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+
 import org.junit.Test;
 
 public class StickyNextVersionMojoTest {
 
   @Test
-  public void versionRangeMajor() throws MojoExecutionException, MojoFailureException {
-    checkMajor("1.999-SNAPSHOT", "[1,)");
-    checkMajor("2.999-SNAPSHOT", "[2,)");
-    checkMajor("2.1.999-SNAPSHOT", "[2,)");
-    checkMajor("3.999-SNAPSHOT", "[3,)");
-    checkMajor("3.1-SNAPSHOT", "[3,)");
-    checkMajor("5.23123-SNAPSHOT", "[5,)");
+  public void incrementMajor() {
+    checkIncrementMajor("1", "2.1");
+    checkIncrementMajor("1.1", "2.1");
+    checkIncrementMajor("2.6", "3.1");
+    checkIncrementMajor("6.6", "7.1");
+    checkIncrementMajor("20", "21.1");
+    checkIncrementMajor("20.10.1.3.FINAL", "21.1");
   }
 
   @Test
-  public void versionRangeMinor() throws MojoExecutionException, MojoFailureException {
-    checkMinor("1.999-SNAPSHOT", "[1,2)");
-    checkMinor("2.999-SNAPSHOT", "[2,3)");
-    checkMinor("2.1.999-SNAPSHOT", "[2,3)");
-    checkMinor("3.999-SNAPSHOT", "[3,4)");
-    checkMinor("3.1-SNAPSHOT", "[3,4)");
+  public void incrementMinor() {
+    checkIncrementMinor("1", "1.1");
+    checkIncrementMinor("1.0", "1.1");
+    checkIncrementMinor("1.1", "1.2");
+    checkIncrementMinor("1.1.1", "1.2");
+    checkIncrementMinor("2.7", "2.8");
+    checkIncrementMinor("2.7.1", "2.8");
+    checkIncrementMinor("20.135", "20.136");
+    checkIncrementMinor("20.9", "20.10");
+    checkIncrementMinor("20.10", "20.11");
+    checkIncrementMinor("20.10.1.3.FINAL", "20.11");
   }
 
   @Test
-  public void versionRangePatch() throws MojoExecutionException, MojoFailureException {
-    checkPatch("2.1.999-SNAPSHOT", "[2.1,2.2)");
-    checkPatch("3.1-SNAPSHOT", "[3.1,3.2)");
+  public void incrementPatch() {
+    checkIncrementPatch("1.0", "1.0.1");
+    checkIncrementPatch("1.1", "1.1.1");
+    checkIncrementPatch("2.1.1", "2.1.2");
+    checkIncrementPatch("20.10", "20.10.1");
+    checkIncrementPatch("20.10.1", "20.10.2");
   }
 
   @Test
-  public void versionRangePatchDatetime() throws MojoExecutionException, MojoFailureException {
-    checkPatchDatetime("1.999-SNAPSHOT", "[1,2)");
-    checkPatchDatetime("2.999-SNAPSHOT", "[2,3)");
-    checkPatchDatetime("2.1.999-SNAPSHOT", "[2,3)");
-    checkPatchDatetime("3.999-SNAPSHOT", "[3,4)");
-    checkPatchDatetime("3.1-SNAPSHOT", "[3,4)");
+  public void incrementPatchDatetime() {
+    checkIncrementPatchDatetime("1.2", "1.2.123456789");
+    checkIncrementPatchDatetime("1", "1.1.123456789");
+    checkIncrementPatchDatetime("1.2.1", "1.2.123456789");
+    checkIncrementPatchDatetime("20.10.1.3.FINAL", "20.10.123456789");
   }
 
-  private void checkMajor(String version, String expectation) {
-    check(version, expectation, VersionIncrement.major);
+  private void checkIncrementMajor(String version, String expectation) {
+    checkIncrement(version, expectation, VersionIncrement.major);
   }
 
-  private void checkMinor(String version, String expectation) {
-    check(version, expectation, VersionIncrement.minor);
+  private void checkIncrementMinor(String version, String expectation) {
+    checkIncrement(version, expectation, VersionIncrement.minor);
   }
 
-  private void checkPatch(String version, String expectation) {
-    check(version, expectation, VersionIncrement.patch);
+  private void checkIncrementPatch(String version, String expectation) {
+    checkIncrement(version, expectation, VersionIncrement.patch);
   }
 
-  private void checkPatchDatetime(String version, String expectation) {
-    check(version, expectation, VersionIncrement.patchDatetime);
+  private void checkIncrementPatchDatetime(String version, String expectation) {
+    checkIncrement(version, expectation, VersionIncrement.patchDatetime);
   }
 
-  private void check(String version, String expectation, VersionIncrement versionIncrement) {
+  private void checkIncrement(String version, String expectation, VersionIncrement versionIncrement) {
+    StickyNextVersionMojo mojo = new StickyNextVersionMojo() {
+
+      @Override
+      VersionIncrement getVersionIncrement() {
+        return versionIncrement;
+      }
+
+      @Override
+      Clock getClock() {
+        return Clock.fixed(Instant.ofEpochMilli(123456789000L), ZoneId.of("Pacific/Auckland"));
+      }
+    };
+    assertThat(mojo.increment(version)).isEqualTo(expectation);
+  }
+
+  @Test
+  public void versionRangeMajor() {
+    checkRangeMajor("1.999-SNAPSHOT", "[1,)");
+    checkRangeMajor("2.999-SNAPSHOT", "[2,)");
+    checkRangeMajor("2.1.999-SNAPSHOT", "[2,)");
+    checkRangeMajor("3.999-SNAPSHOT", "[3,)");
+    checkRangeMajor("3.1-SNAPSHOT", "[3,)");
+    checkRangeMajor("5.23123-SNAPSHOT", "[5,)");
+  }
+
+  @Test
+  public void versionRangeMinor() {
+    checkRangeMinor("1.999-SNAPSHOT", "[1,2)");
+    checkRangeMinor("2.999-SNAPSHOT", "[2,3)");
+    checkRangeMinor("2.1.999-SNAPSHOT", "[2,3)");
+    checkRangeMinor("3.999-SNAPSHOT", "[3,4)");
+    checkRangeMinor("3.1-SNAPSHOT", "[3,4)");
+  }
+
+  @Test
+  public void versionRangePatch() {
+    checkRangePatch("2.1.999-SNAPSHOT", "[2.1,2.2)");
+    checkRangePatch("3.1-SNAPSHOT", "[3.1,3.2)");
+  }
+
+  @Test
+  public void versionRangePatchDatetime() {
+    checkRangePatchDatetime("1.999-SNAPSHOT", "[1,2)");
+    checkRangePatchDatetime("2.999-SNAPSHOT", "[2,3)");
+    checkRangePatchDatetime("2.1.999-SNAPSHOT", "[2,3)");
+    checkRangePatchDatetime("3.999-SNAPSHOT", "[3,4)");
+    checkRangePatchDatetime("3.1-SNAPSHOT", "[3,4)");
+  }
+
+  private void checkRangeMajor(String version, String expectation) {
+    checkRange(version, expectation, VersionIncrement.major);
+  }
+
+  private void checkRangeMinor(String version, String expectation) {
+    checkRange(version, expectation, VersionIncrement.minor);
+  }
+
+  private void checkRangePatch(String version, String expectation) {
+    checkRange(version, expectation, VersionIncrement.patch);
+  }
+
+  private void checkRangePatchDatetime(String version, String expectation) {
+    checkRange(version, expectation, VersionIncrement.patchDatetime);
+  }
+
+  private void checkRange(String version, String expectation, VersionIncrement versionIncrement) {
     StickyNextVersionMojo mojo = new StickyNextVersionMojo() {
 
       @Override

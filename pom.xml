@@ -13,7 +13,7 @@
   <version>4.2-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
-  <name>bounds-maven-plugin-3</name>
+  <name>bounds-maven-plugin</name>
   <description>A maven plugin to update version range bounds</description>
   <inceptionYear>2012</inceptionYear>
   <url>http://www.StickyCode.net/plugins/sticky-bounds-plugin</url>
@@ -83,8 +83,6 @@
           <pomIncludes>
             <pomInclude>*/pom.xml</pomInclude>
           </pomIncludes>
-          <!-- <settingsFile>src/it/settings.xml</settingsFile> -->
-          <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
           <postBuildHookScript>verify.bsh</postBuildHookScript>
           <showVersion>true</showVersion>
           <showErrors>true</showErrors>
@@ -98,6 +96,28 @@
               <goal>integration-test</goal>
               <goal>verify</goal>
             </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.1.2</version>
+        <executions>
+          <execution>
+            <id>purge-local-dependencies</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>purge-local-repository</goal>
+            </goals>
+            <configuration>
+              <verbose>true</verbose>
+              <!-- This must operate on the whole artifact as the metadata needs to be deleted. Leaving the metadata would mean Maven thinks there are SNAPSHOT versions that can never be resolved. -->
+              <manualIncludes>
+                <manualInclude>${project.groupId}:${project.artifactId}</manualInclude>
+              </manualIncludes>
+            </configuration>
           </execution>
         </executions>
       </plugin>

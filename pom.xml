@@ -10,7 +10,7 @@
 
   <groupId>net.stickycode.plugins</groupId>
   <artifactId>bounds-maven-plugin</artifactId>
-  <version>4.2</version>
+  <version>4.3-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
   <name>bounds-maven-plugin</name>
@@ -21,7 +21,7 @@
   <scm>
     <connection>${git.url}</connection>
     <developerConnection>${git.url}</developerConnection>
-    <tag>bounds-maven-plugin-4.2</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <prerequisites>

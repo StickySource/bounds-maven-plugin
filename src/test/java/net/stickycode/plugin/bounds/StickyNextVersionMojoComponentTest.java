@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.resolution.VersionRangeRequest;
 import org.eclipse.aether.resolution.VersionRangeResult;
+import org.eclipse.aether.transfer.MetadataNotFoundException;
 import org.eclipse.aether.version.Version;
 import org.junit.Test;
 
@@ -33,13 +34,36 @@ public class StickyNextVersionMojoComponentTest {
       return value.compareTo(o.toString());
     }
   }
+  @Test
+  public void noMetadata() {
+    check(VersionIncrementRule.major, false, "1.999-SNAPSHOT", "1.1", new MetadataNotFoundException(null, null, "Nothing"));
+    check(VersionIncrementRule.minor, false,"1.999-SNAPSHOT", "1.1", new MetadataNotFoundException(null, null, "Nothing"));
+    check(VersionIncrementRule.patch, false,"1.999-SNAPSHOT", "1.1.1", new MetadataNotFoundException(null, null, "Nothing"));
+    check(VersionIncrementRule.patchDatetime, false, "1.999-SNAPSHOT", "1.1.123456789", new MetadataNotFoundException(null, null, "Nothing"));
+    check(VersionIncrementRule.major, false, "2.999-SNAPSHOT", "2.1", new MetadataNotFoundException(null, null, "Nothing"));
+    check(VersionIncrementRule.minor, false,"2.999-SNAPSHOT", "2.1", new MetadataNotFoundException(null, null, "Nothing"));
+    check(VersionIncrementRule.patch, false,"2.999-SNAPSHOT", "2.1.1", new MetadataNotFoundException(null, null, "Nothing"));
+    check(VersionIncrementRule.patchDatetime, false, "2.999-SNAPSHOT", "2.1.123456789", new MetadataNotFoundException(null, null, "Nothing"));
+  }
 
   @Test
   public void snapshots() {
-    check(VersionIncrementRule.major, false, "1.999-SNAPSHOT", "2.1", "1.999-SNAPSHOT");
-    check(VersionIncrementRule.minor, false, "1.999-SNAPSHOT", "1.1000", "1.999-SNAPSHOT");
-    check(VersionIncrementRule.patch, false, "1.999-SNAPSHOT", "1.999.1", "1.999-SNAPSHOT");
-    check(VersionIncrementRule.patchDatetime, false, "1.999-SNAPSHOT", "1.999.123456789", "1.999-SNAPSHOT");
+    check(VersionIncrementRule.major, false, "1.999-SNAPSHOT", "2.1", null,"1.999-SNAPSHOT");
+    check(VersionIncrementRule.minor, false, "1.999-SNAPSHOT", "1.1000", null,"1.999-SNAPSHOT");
+    check(VersionIncrementRule.patch, false, "1.999-SNAPSHOT", "1.999.1", null,"1.999-SNAPSHOT");
+    check(VersionIncrementRule.patchDatetime, false, "1.999-SNAPSHOT", "1.999.123456789", null,"1.999-SNAPSHOT");
+  }
+
+  @Test
+  public void noResolvedValues() {
+    check(VersionIncrementRule.major, "1.999-SNAPSHOT", "1.1");
+    check(VersionIncrementRule.minor, "1.999-SNAPSHOT", "1.1");
+    check(VersionIncrementRule.patch, "1.999-SNAPSHOT", "1.1.1");
+    check(VersionIncrementRule.patchDatetime, "1.999-SNAPSHOT", "1.1.123456789");
+    check(VersionIncrementRule.major, "2.999-SNAPSHOT", "2.1");
+    check(VersionIncrementRule.minor, "2.999-SNAPSHOT", "2.1");
+    check(VersionIncrementRule.patch, "2.999-SNAPSHOT", "2.1.1");
+    check(VersionIncrementRule.patchDatetime, "2.999-SNAPSHOT", "2.1.123456789");
   }
 
   @Test
@@ -78,10 +102,10 @@ public class StickyNextVersionMojoComponentTest {
 
   private void check(VersionIncrementRule versionIncrement, String projectVersion, String expectation,
       String... resolvedVersions) {
-    check(versionIncrement, true, projectVersion, expectation, resolvedVersions);
+    check(versionIncrement, true, projectVersion, expectation, null, resolvedVersions);
   }
 
-  private void check(VersionIncrementRule versionIncrement, boolean ignoreSnapshots, String projectVersion, String expectation,
+  private void check(VersionIncrementRule versionIncrement, boolean ignoreSnapshots, String projectVersion, String expectation, Exception exception,
       String... resolvedVersions) {
     StickyNextVersionMojo mojo = new StickyNextVersionMojo() {
 
@@ -93,8 +117,12 @@ public class StickyNextVersionMojoComponentTest {
       @Override
       VersionRangeResult resolve(VersionRangeRequest request) {
         VersionRangeResult result = new VersionRangeResult(request);
+
         for (String resolvedVersion : resolvedVersions)
           result.addVersion(new VersionImplementation(resolvedVersion));
+
+        if (exception != null)
+          result.addException(exception);
 
         return result;
       }

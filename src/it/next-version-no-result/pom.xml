@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2018 RedEngine Ltd, http://www.redengine.co.nz. All rights reserved. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>net.stickycode.deploy.sample</groupId>
+  <artifactId>sticky-deployer-sample-helloworld</artifactId>
+  <version>2.999-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <description>This will lookup and find the 1.4 release of this artifact we are pretending to be</description>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>net.stickycode.plugins</groupId>
+        <artifactId>bounds-maven-plugin</artifactId>
+        <version>@pom.version@</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>next-version</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

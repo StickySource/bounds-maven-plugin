@@ -62,6 +62,7 @@ public class StickyNextVersionMojoComponentTest {
     check(VersionIncrementRule.patchDatetime, "1.999-SNAPSHOT", "1.1.123456789");
     check(VersionIncrementRule.major, "2.999-SNAPSHOT", "2.1");
     check(VersionIncrementRule.minor, "2.999-SNAPSHOT", "2.1");
+    check(VersionIncrementRule.minor, "2.9", "2.9", "2.1", "2.2", "2.8");
     check(VersionIncrementRule.patch, "2.999-SNAPSHOT", "2.1.1");
     check(VersionIncrementRule.patchDatetime, "2.999-SNAPSHOT", "2.1.123456789");
   }
@@ -80,6 +81,7 @@ public class StickyNextVersionMojoComponentTest {
     check(VersionIncrementRule.minor, "1.999-SNAPSHOT", "1.6", "1.5");
     check(VersionIncrementRule.minor, "1.999-SNAPSHOT", "1.10", "1.9");
     check(VersionIncrementRule.minor, "5.6-SNAPSHOT", "5.10", "5.9");
+    check(VersionIncrementRule.minor, "2.9", "2.9", "2.8");
     check(VersionIncrementRule.minor, "1.999-SNAPSHOT", "1.1000", "1.999", "1.999-SNAPSHOT");
   }
 

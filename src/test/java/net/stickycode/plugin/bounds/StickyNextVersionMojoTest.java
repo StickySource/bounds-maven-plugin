@@ -100,6 +100,7 @@ public class StickyNextVersionMojoTest {
     checkRangeMinor("2.1.999-SNAPSHOT", "[2,3)");
     checkRangeMinor("3.999-SNAPSHOT", "[3,4)");
     checkRangeMinor("3.1-SNAPSHOT", "[3,4)");
+    checkRangeMinor("2.9", "[2,3)");
   }
 
   @Test

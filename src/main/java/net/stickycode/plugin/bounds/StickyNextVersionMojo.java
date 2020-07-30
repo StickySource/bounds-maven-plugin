@@ -84,6 +84,11 @@ public class StickyNextVersionMojo
   @Override
   public void execute()
       throws MojoExecutionException, MojoFailureException {
+    if (!project.getVersion().endsWith("-SNAPSHOT")) {
+      log("project already has a release version, leaving it alone");
+      return;
+    }
+
     String nextVersion = nextVersion(project.getVersion());
 
     if (nextVersionProperty != null) {
@@ -182,25 +187,40 @@ public class StickyNextVersionMojo
         if (!aVersion.toString().endsWith("SNAPSHOT")) {
           filtered.add(aVersion);
         }
+        else
+          debug("ignoring %s", aVersion);
       }
       v.setVersions(filtered);
     }
+
+    debug("found %s", v.getVersions());
 
     if (v.getHighestVersion() != null) {
       log("resolved %s:%s:%s to %s", artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), v.getHighestVersion());
       return v.getHighestVersion().toString();
     }
 
-    // could not find a version in the range, could be others outside of the range
-    if (v.getExceptions().isEmpty())
-      return deriveDefaultVersion(versionRange);
-
+    //
     // this means there are literally no values
-    if (v.getExceptions().get(0) instanceof MetadataNotFoundException)
-      return deriveDefaultVersion(versionRange);
+    if (v.getExceptions().isEmpty()) {
+      debug("could not find a version in the range %s, could be others outside of the range. Derive a default version",
+        versionRange);
+      return selectDefaultVersion(versionRange, artifact);
+    }
 
-    // There was an error resolving, e.g. auth failure, network failure, misconfiguration
-    throw new RuntimeException("Failed to resolve " + artifact.toString(), v.getExceptions().get(0));
+    if (v.getExceptions().get(0) instanceof MetadataNotFoundException) {
+      debug("No metadata that means that there are no previous releases. Derive a default version", versionRange);
+      return selectDefaultVersion(versionRange, artifact);
+    }
+
+    throw new RuntimeException("There was an error resolving " + artifact.toString() + ", correct the issue and try again",
+      v.getExceptions().get(0));
+  }
+
+  private String selectDefaultVersion(String versionRange, DefaultArtifact artifact) {
+    String derivedDefaultVersion = deriveDefaultVersion(versionRange);
+    log("default %s:%s:%s to %s", artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), derivedDefaultVersion);
+    return derivedDefaultVersion;
   }
 
   /** Derive a default version from the range when we do not get any results for the resolution */
@@ -245,6 +265,10 @@ public class StickyNextVersionMojo
     catch (VersionRangeResolutionException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private void debug(String message, Object... parameters) {
+    getLog().debug(String.format(message, parameters));
   }
 
   private void log(String message, Object... parameters) {

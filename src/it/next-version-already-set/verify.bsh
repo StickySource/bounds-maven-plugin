@@ -1,0 +1,19 @@
+import java.io.*;
+import java.util.*;
+
+import org.codehaus.plexus.util.*;
+
+File logFile = new File( basedir, "build.log" );
+System.out.println( "Checking for existence of first test file: " + logFile );
+if (!logFile.exists())
+  throw new RuntimeException(logFile.toString() + " not found" );
+
+
+String log = FileUtils.fileRead( logFile, "UTF-8" ).trim();
+
+if (!log.contains("project already has a release version, leaving it alone")) {
+  System.err.println("Expected 'project already has a release version, leaving it alone'");
+  return false;
+}
+
+return true;

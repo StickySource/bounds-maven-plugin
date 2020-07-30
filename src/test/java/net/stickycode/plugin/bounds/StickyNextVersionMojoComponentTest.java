@@ -37,12 +37,15 @@ public class StickyNextVersionMojoComponentTest {
   @Test
   public void noMetadata() {
     check(VersionIncrementRule.major, false, "1.999-SNAPSHOT", "1.1", new MetadataNotFoundException(null, null, "Nothing"));
-    check(VersionIncrementRule.minor, false,"1.999-SNAPSHOT", "1.1", new MetadataNotFoundException(null, null, "Nothing"));
-    check(VersionIncrementRule.patch, false,"1.999-SNAPSHOT", "1.1.1", new MetadataNotFoundException(null, null, "Nothing"));
-    check(VersionIncrementRule.patchDatetime, false, "1.999-SNAPSHOT", "1.1.123456789", new MetadataNotFoundException(null, null, "Nothing"));
     check(VersionIncrementRule.major, false, "2.999-SNAPSHOT", "2.1", new MetadataNotFoundException(null, null, "Nothing"));
+
+    check(VersionIncrementRule.minor, false,"1.999-SNAPSHOT", "1.1", new MetadataNotFoundException(null, null, "Nothing"));
     check(VersionIncrementRule.minor, false,"2.999-SNAPSHOT", "2.1", new MetadataNotFoundException(null, null, "Nothing"));
+
+    check(VersionIncrementRule.patch, false,"1.999-SNAPSHOT", "1.1.1", new MetadataNotFoundException(null, null, "Nothing"));
     check(VersionIncrementRule.patch, false,"2.999-SNAPSHOT", "2.1.1", new MetadataNotFoundException(null, null, "Nothing"));
+
+    check(VersionIncrementRule.patchDatetime, false, "1.999-SNAPSHOT", "1.1.123456789", new MetadataNotFoundException(null, null, "Nothing"));
     check(VersionIncrementRule.patchDatetime, false, "2.999-SNAPSHOT", "2.1.123456789", new MetadataNotFoundException(null, null, "Nothing"));
   }
 
@@ -57,23 +60,32 @@ public class StickyNextVersionMojoComponentTest {
   @Test
   public void noResolvedValues() {
     check(VersionIncrementRule.major, "1.999-SNAPSHOT", "1.1");
-    check(VersionIncrementRule.minor, "1.999-SNAPSHOT", "1.1");
-    check(VersionIncrementRule.patch, "1.999-SNAPSHOT", "1.1.1");
-    check(VersionIncrementRule.patchDatetime, "1.999-SNAPSHOT", "1.1.123456789");
     check(VersionIncrementRule.major, "2.999-SNAPSHOT", "2.1");
+
+    check(VersionIncrementRule.minor, "1.999-SNAPSHOT", "1.1");
     check(VersionIncrementRule.minor, "2.999-SNAPSHOT", "2.1");
-    check(VersionIncrementRule.minor, "2.9", "2.9", "2.1", "2.2", "2.8");
+
+    check(VersionIncrementRule.patch, "1.999-SNAPSHOT", "1.1.1");
     check(VersionIncrementRule.patch, "2.999-SNAPSHOT", "2.1.1");
+
+    check(VersionIncrementRule.patchDatetime, "1.999-SNAPSHOT", "1.1.123456789");
     check(VersionIncrementRule.patchDatetime, "2.999-SNAPSHOT", "2.1.123456789");
+  }
+
+  @Test
+  public void releaseVersionAlreadySet() {
+    check(VersionIncrementRule.major, "1.2", "1.2", "1.115");
+    check(VersionIncrementRule.minor, "2.9", "2.9", "2.8");
+    check(VersionIncrementRule.patch, "5.6", "5.6", "5.9");
+    check(VersionIncrementRule.patchDatetime, "5.6", "5.6", "5.9");
   }
 
   @Test
   public void major() {
     check(VersionIncrementRule.major, "1.999-SNAPSHOT", "2.1", "1.5");
     check(VersionIncrementRule.major, "1.999-SNAPSHOT", "11.1", "10.5");
-    check(VersionIncrementRule.major, "1.2", "2.1", "1.115");
     check(VersionIncrementRule.major, "1.999-SNAPSHOT", "2.1", "1.115", "1.999-SNAPSHOT");
-    check(VersionIncrementRule.major, "1.2", "2.1", "1.115", "1.999-SNAPSHOT");
+    check(VersionIncrementRule.major, "1.2-SNAPSHOT", "2.1", "1.115", "1.999-SNAPSHOT");
   }
 
   @Test
@@ -81,7 +93,6 @@ public class StickyNextVersionMojoComponentTest {
     check(VersionIncrementRule.minor, "1.999-SNAPSHOT", "1.6", "1.5");
     check(VersionIncrementRule.minor, "1.999-SNAPSHOT", "1.10", "1.9");
     check(VersionIncrementRule.minor, "5.6-SNAPSHOT", "5.10", "5.9");
-    check(VersionIncrementRule.minor, "2.9", "2.9", "2.8");
     check(VersionIncrementRule.minor, "1.999-SNAPSHOT", "1.1000", "1.999", "1.999-SNAPSHOT");
   }
 

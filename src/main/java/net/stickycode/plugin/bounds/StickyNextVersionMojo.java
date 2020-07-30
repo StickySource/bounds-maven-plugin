@@ -84,11 +84,6 @@ public class StickyNextVersionMojo
   @Override
   public void execute()
       throws MojoExecutionException, MojoFailureException {
-    if (!project.getVersion().endsWith("-SNAPSHOT")) {
-      log("project already has a release version, leaving it alone");
-      return;
-    }
-
     String nextVersion = nextVersion(project.getVersion());
 
     if (nextVersionProperty != null) {
@@ -104,6 +99,11 @@ public class StickyNextVersionMojo
   }
 
   String nextVersion(String projectVersion) {
+    if (!projectVersion.endsWith("-SNAPSHOT")) {
+      log("project already has a release version, using it");
+      return projectVersion;
+    }
+
     String versionRange = versionRange(projectVersion);
 
     String version = highestVersion(versionRange);

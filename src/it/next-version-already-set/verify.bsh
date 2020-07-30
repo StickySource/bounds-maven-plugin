@@ -12,7 +12,17 @@ if (!logFile.exists())
 String log = FileUtils.fileRead( logFile, "UTF-8" ).trim();
 
 if (!log.contains("project already has a release version, leaving it alone")) {
-  System.err.println("Expected 'project already has a release version, leaving it alone'");
+  System.err.println("Expected 'project already has a release version, using it'");
+  return false;
+}
+
+if (!log.contains("set property tile-change.currentVersion to 1.5")) {
+  System.err.println("Expected 'set property tile-change.currentVersion to 1.5'");
+  return false;
+}
+
+if (!log.contains("set project version to 1.5")) {
+  System.err.println("Expected 'project version to 1.5'");
   return false;
 }
 

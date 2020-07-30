@@ -11,7 +11,7 @@ if (!logFile.exists())
 
 String log = FileUtils.fileRead( logFile, "UTF-8" ).trim();
 
-if (!log.contains("project already has a release version, leaving it alone")) {
+if (!log.contains("project already has a release version, using it")) {
   System.err.println("Expected 'project already has a release version, using it'");
   return false;
 }

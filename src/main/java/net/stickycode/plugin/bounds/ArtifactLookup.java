@@ -35,10 +35,6 @@ public class ArtifactLookup {
     return this;
   }
 
-  public ArtifactLookup(String gav) {
-    this.gav = gav;
-  }
-
   public String getGav() {
     return gav;
   }

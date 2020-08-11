@@ -61,7 +61,7 @@ public class StickyCurrentVersionMojo
 
     if (artifacts != null)
       for (String artifact : artifacts) {
-        lookup.add(new ArtifactLookup(artifact));
+        lookup.add(new ArtifactLookup().withGav(artifact));
       }
 
     if (coordinates != null)

@@ -94,6 +94,7 @@ public class StickyCurrentVersionMojo
   void lookupArtifactVersion(ArtifactLookup lookup) {
     Version version = highestVersion(lookup.getArtifact());
     project.getProperties().setProperty(lookup.getPropertyName(), version.toString());
+    project.getProperties().setProperty(lookup.getVersionRangePropertyName(), lookup.getArtifact().getVersion());
     log("resolved %s to %s", lookup.getArtifact(), version.toString());
   }
 

@@ -3,16 +3,36 @@ import java.util.*;
 
 import org.codehaus.plexus.util.*;
 
-File pomFile = new File( basedir, "build.log" );
-System.out.println( "Checking for existence of first test file: " + pomFile );
-if (!pomFile.exists())
-  throw new RuntimeException(pomFile.toString() + " not found" );
+File buildLog = new File( basedir, "build.log" );
+System.out.println( "Checking for existence of first test file: " + buildLog );
+if (!buildLog.exists())
+  throw new RuntimeException(buildLog.toString() + " not found" );
 
+String logs = FileUtils.fileRead( buildLog, "UTF-8" ).trim();
 
-String pom = FileUtils.fileRead( pomFile, "UTF-8" ).trim();
+if (!logs.contains("resolved net.stickycode:sticky-coercion:jar:[2,3] to 2.7")) {
+  System.err.println("Expected version to be 2.7");
+  return false;
+}
 
-if (pom.contains("resolved net.stickycode:sticky-coercion:jar:[2,3] to 2.7"))
-	return true;
+if (!logs.contains("sticky-coercion.version: 2.7")) {
+  System.err.println("Expected property sticky-coercion.version to be 2.7");
+  return false;
+}
 
-System.err.println("Expected version to be 2.7");
-return false;
+if (!logs.contains("sticky-coercion.versionRange: [2,3]")) {
+  System.err.println("Expected property sticky-coercion.versionRange to be [2,3]");
+  return false;
+}
+
+if (!logs.contains("new-coercion.version: 3.7")) {
+  System.err.println("Expected property new-coercion.version to be 3.7");
+  return false;
+}
+
+if (!logs.contains("new-coercion.versionRange: [3,4)")) {
+  System.err.println("Expected property new-coercion.versionRange to be [3,4)");
+  return false;
+}
+
+return true;

@@ -42,4 +42,8 @@ public class ArtifactLookup {
   public String getPropertyName() {
     return propertyName;
   }
+
+  public String getVersionRangePropertyName() {
+    return getPropertyName() + "Range";
+  }
 }

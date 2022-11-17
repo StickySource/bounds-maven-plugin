@@ -5,7 +5,7 @@
         <goals>
           <goal>current-version</goal>
           <goal>upgrade</goal>
-          <goal>bounds</goal>
+          <goal>update</goal>
         </goals>
       </pluginExecutionFilter>
       <action>

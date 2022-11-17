@@ -158,6 +158,8 @@ into
       </dependencies>
     </project>
 
+This also supports fixed ranges so [1.5.6] can be upgraded to [1.7.2] for example
+
 ## Next version
 
 Use the bounds:next-version mojo to derive the next likely version of this project from the already released artifacts
@@ -203,6 +205,10 @@ updateProjectVersion defaults to true to you need to set it to false to avoid se
 Is optional so only set it if you wish to use the version outside of the context of the project.version
 
 ## Releases
+
+### Release 4.8
+
+* Improve bounds:upgrade to also upgrade fixed ranges, this means ranges like [1.5.7] will be upgraded to the latest version
 
 ### Release 4.7
 

@@ -64,8 +64,6 @@ public class StickyBoundsUpgradeMojo
   @Parameter(defaultValue = "${repositorySystemSession}", required = true, readonly = true)
   private RepositorySystemSession session;
 
-  private Pattern range = Pattern.compile("\\[[0-9.\\-A-Za-z]+\\s*(,\\s*([0-9.\\-A-Za-z]+)?)\\)");
-
   /**
    * The project's remote repositories to use for the resolution.
    */
@@ -87,10 +85,6 @@ public class StickyBoundsUpgradeMojo
    */
   @Parameter
   private LineSeparator lineSeparator = LineSeparator.defaultValue();
-
-  Matcher matchVersion(String version) {
-    return range.matcher(version);
-  }
 
   /**
    * If bounds should be updated when there is no upgrade, useful for doing cascaded upgrades while minimising deltas
@@ -211,26 +205,19 @@ public class StickyBoundsUpgradeMojo
   }
 
   Artifact resolveLatestVersionRange(Dependency dependency, String version) throws MojoExecutionException {
-    Matcher versionMatch = matchVersion(version);
-
+    RangeVersionMatch versionMatch = new RangeVersionMatch(version);
+    getLog().info("Checking dependency " + dependency.getGroupId() + ":" + dependency.getArtifactId() + ":" + version);
     if (versionMatch.matches()) {
       Artifact artifact = new DefaultArtifact(dependency.getGroupId(), dependency.getArtifactId(),
-        dependency.getClassifier(), dependency.getType(), version.replaceFirst(versionMatch.group(1), ","));
+        dependency.getClassifier(), dependency.getType(), versionMatch.getSearchRange());
 
       Version highestVersion = highestVersion(artifact);
-      String newVersion = "[" + highestVersion.toString() + "," + majorVersionPlusOne(highestVersion) + ")";
-
-      return artifact.setVersion(newVersion);
+      return artifact.setVersion(versionMatch.newVersionRange(highestVersion));
     }
     else {
       return new DefaultArtifact(dependency.getGroupId(), dependency.getArtifactId(),
         dependency.getClassifier(), dependency.getType(), version);
     }
-  }
-
-  private Integer majorVersionPlusOne(Version highestVersion) {
-    String[] split = highestVersion.toString().split("\\.");
-    return Integer.valueOf(split[0]) + 1;
   }
 
   private Dependency findDependencyUsingVersionProperty(String propertyName) {
@@ -305,6 +292,7 @@ public class StickyBoundsUpgradeMojo
         : new MojoExecutionException("Failed to resolve " + artifact.toString(), v.getExceptions().get(0));
     }
 
+    getLog().info("found highest version " + v.getHighestVersion() + " in range " + artifact.getVersion());
     return v.getHighestVersion();
   }
 
@@ -354,7 +342,7 @@ public class StickyBoundsUpgradeMojo
 
       final Nodes versionNodes = dependency.query("mvn:version", context);
       if (versionNodes.size() > 0) {
-        getLog().info("Upgrading dependency to " + artifact.toString() + " from " + oldVersion);
+        getLog().info("Upgrading dependency " + artifact.getGroupId() + ":" + artifact.getArtifactId() + " from " + oldVersion + " to " + artifact.getVersion());
         Element version = (Element) versionNodes.get(0);
         if (!version.getValue().startsWith("${") || updateProperties) {
           Element newRange = new Element("version", "http://maven.apache.org/POM/4.0.0");

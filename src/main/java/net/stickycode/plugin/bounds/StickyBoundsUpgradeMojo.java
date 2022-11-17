@@ -206,7 +206,7 @@ public class StickyBoundsUpgradeMojo
 
   Artifact resolveLatestVersionRange(Dependency dependency, String version) throws MojoExecutionException {
     RangeVersionMatch versionMatch = new RangeVersionMatch(version);
-    getLog().info("Checking dependency " + dependency.getGroupId() + ":" + dependency.getArtifactId() + ":" + version);
+    getLog().debug("Checking dependency " + dependency.getGroupId() + ":" + dependency.getArtifactId() + ":" + version);
     if (versionMatch.matches()) {
       Artifact artifact = new DefaultArtifact(dependency.getGroupId(), dependency.getArtifactId(),
         dependency.getClassifier(), dependency.getType(), versionMatch.getSearchRange());
@@ -292,7 +292,7 @@ public class StickyBoundsUpgradeMojo
         : new MojoExecutionException("Failed to resolve " + artifact.toString(), v.getExceptions().get(0));
     }
 
-    getLog().info("found highest version " + v.getHighestVersion() + " in range " + artifact.getVersion());
+    getLog().debug("found highest version " + v.getHighestVersion() + " in range " + artifact.getVersion());
     return v.getHighestVersion();
   }
 

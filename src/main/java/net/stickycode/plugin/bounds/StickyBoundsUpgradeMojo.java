@@ -89,10 +89,16 @@ public class StickyBoundsUpgradeMojo
   /**
    * If bounds should be updated when there is no upgrade, useful for doing cascaded upgrades while minimising deltas
    */
-  @Parameter()
+  @Parameter(defaultValue = "false")
   private boolean acceptMinorVersionChanges = false;
 
   Changes change = new Changes();
+  
+  /**
+   * If a fixed version is defined, say [1.5.17] then most often when you upgrade its a third party library and you want [1.5.22] or [1.6.5], not [2.0.1-alpha]
+   */
+  @Parameter(defaultValue = "false")
+  private boolean allowFixedContractBumps =false;
 
   @Override
   public void execute() throws MojoExecutionException {
@@ -206,6 +212,10 @@ public class StickyBoundsUpgradeMojo
 
   Artifact resolveLatestVersionRange(Dependency dependency, String version) throws MojoExecutionException {
     RangeVersionMatch versionMatch = new RangeVersionMatch(version);
+    
+    if (allowFixedContractBumps)
+      versionMatch.allowFixedContractBump();
+    
     getLog().debug("Checking dependency " + dependency.getGroupId() + ":" + dependency.getArtifactId() + ":" + version);
     if (versionMatch.matches()) {
       Artifact artifact = new DefaultArtifact(dependency.getGroupId(), dependency.getArtifactId(),

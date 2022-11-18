@@ -11,8 +11,8 @@ if (!pomFile.exists())
 
 String pom = FileUtils.fileRead( pomFile, "UTF-8" ).trim();
 
-if (pom.contains(">[2.7]<"))
+if (pom.contains(">[6.6]<"))
 	return true;
 	
-System.err.println("Expected version to be [2.7]");
+System.err.println("Expected version to be [6.6]");
 return false;

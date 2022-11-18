@@ -50,12 +50,19 @@ public class RangeVersionMatchTest {
   }
 
   @Test
+  public void checkSearchRangeWithBump() {
+    checkSearchRangeWithBump("[1.3.4]", "[1.3.4,)");
+    checkSearchRangeWithBump("[6]", "[6,)");
+    checkSearchRangeWithBump("[454.132]", "[454.132,)");
+  }
+
+  @Test
   public void checkSearchRange() {
     checkSearchRange("[1,2)", "[1,)");
     checkSearchRange("[1.0,2)", "[1.0,)");
-    checkSearchRange("[1]", "[1,)");
-    checkSearchRange("[1.2]", "[1.2,)");
-    checkSearchRange("[6.2.6]", "[6.2.6,)");
+    checkSearchRange("[1]", "[1,2)");
+    checkSearchRange("[1.2]", "[1.2,2)");
+    checkSearchRange("[6.2.6]", "[6.2.6,7)");
     checkSearchRange("[1.0.2,2)", "[1.0.2,)");
     checkSearchRange("[4,5)", "[4,)");
     checkSearchRange("[1.0.4 ,2.3.4)", "[1.0.4 ,)");
@@ -64,5 +71,9 @@ public class RangeVersionMatchTest {
 
   private void checkSearchRange(String version, String expected) {
     assertThat(new RangeVersionMatch(version).getSearchRange()).isEqualTo(expected);
+  }
+
+  private void checkSearchRangeWithBump(String version, String expected) {
+    assertThat(new RangeVersionMatch(version).allowFixedContractBump().getSearchRange()).isEqualTo(expected);
   }
 }

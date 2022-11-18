@@ -160,6 +160,44 @@ into
 
 This also supports fixed ranges so [1.5.6] can be upgraded to [1.7.2] for example
 
+## Upgrade fixed ranges
+
+It can be useful to upgrade all the ranges to the highest valid range, so running, 
+especially when composing third party libraries where you want to lock them down
+
+`mvn bounds:upgrade`
+
+will turn
+
+    <project>
+      <version>1.6-SNAPSHOT</version>
+      <dependencies>
+        <dependency>
+          <groupId>net.stickycode.composite</groupId>
+          <artifactId>sticky-composite-logging-api</artifactId>
+          <version>[2.4]</version>
+        </dependency>
+      </dependencies>
+    </project>
+
+into
+
+    <project>
+      <version>2.1-SNAPSHOT</version>
+      <dependencies>
+        <dependency>
+          <groupId>net.stickycode.composite</groupId>
+          <artifactId>sticky-composite-logging-api</artifactId>
+          <version>[2.9]</version>
+        </dependency>
+      </dependencies>
+    </project>
+
+Generally fixed range want to stay within the current contract i.e. [1.2.17] will upgrade to [1.2.30] or [1.3.5], 
+
+however if want to upgrade of fixed ranges to do major version bumps then you can set the flag -DallowFixedContractBumps=true 
+then [1.2.17] could be upgraded to [2.17.1]
+
 ## Next version
 
 Use the bounds:next-version mojo to derive the next likely version of this project from the already released artifacts
@@ -206,7 +244,11 @@ Is optional so only set it if you wish to use the version outside of the context
 
 ## Releases
 
-### Release 4.8
+### Release 4.11
+
+* Improve bounds:upgrade to not bump contract versions in fixed ranges unless the -DallowFixedContractBumps=true is set
+
+### Release 4.10
 
 * Improve bounds:upgrade to also upgrade fixed ranges, this means ranges like [1.5.7] will be upgraded to the latest version
 

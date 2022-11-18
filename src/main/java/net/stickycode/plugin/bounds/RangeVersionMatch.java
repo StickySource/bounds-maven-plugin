@@ -3,9 +3,6 @@ package net.stickycode.plugin.bounds;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.maven.model.Dependency;
-import org.eclipse.aether.artifact.Artifact;
-import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.version.Version;
 
 public class RangeVersionMatch {
@@ -19,6 +16,8 @@ public class RangeVersionMatch {
   private Matcher fixedMatcher;
 
   private String version;
+
+  private boolean allowFixedContractBumps = false;
 
   public RangeVersionMatch(String version) {
     this.version = version;
@@ -41,13 +40,16 @@ public class RangeVersionMatch {
   public String newVersionRange(Version highestVersion) {
     if (fixedMatcher.matches())
       return "[" + highestVersion + "]";
-    
+
     return "[" + highestVersion.toString() + "," + majorVersionPlusOne(highestVersion) + ")";
   }
 
   public String getSearchRange() {
     if (fixedMatcher.matches())
-      return "[" + fixedMatcher.group(1) + ",)";
+      if (allowFixedContractBumps)
+        return "[" + fixedMatcher.group(1) + ",)";
+      else
+        return "[" + fixedMatcher.group(1) + "," + majorVersionPlusOne(fixedMatcher.group(1)) + ")";
 
     if (rangeMatcher.matches())
       return version.replaceFirst(rangeMatcher.group(1), ",");
@@ -56,7 +58,16 @@ public class RangeVersionMatch {
   }
 
   private Integer majorVersionPlusOne(Version highestVersion) {
-    String[] split = highestVersion.toString().split("\\.");
+    return majorVersionPlusOne(highestVersion.toString());
+  }
+
+  private Integer majorVersionPlusOne(String highestVersion) {
+    String[] split = highestVersion.split("\\.");
     return Integer.valueOf(split[0]) + 1;
+  }
+
+  public RangeVersionMatch allowFixedContractBump() {
+    this.allowFixedContractBumps = true;
+    return this;
   }
 }

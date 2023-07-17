@@ -1,0 +1,23 @@
+import java.io.*;
+import java.util.*;
+
+import org.codehaus.plexus.util.*;
+
+File buildLog = new File( basedir, "build.log" );
+System.out.println( "Checking for existence of first test file: " + buildLog );
+if (!buildLog.exists())
+  throw new RuntimeException(buildLog.toString() + " not found" );
+
+String logs = FileUtils.fileRead( buildLog, "UTF-8" ).trim();
+
+if (!logs.contains("exec-maven-plugin")) {
+  System.err.println("Expected to invoke exec-maven-plugin");
+  return false;
+}
+ 
+if (!logs.contains("resolved net.stickycode:sticky-coercion:jar:[2,3) to 2.7")) {
+  System.err.println("Expected version to be 2.7");
+  return false;
+}
+
+return true;

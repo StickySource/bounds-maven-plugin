@@ -34,6 +34,13 @@ public class StickyCurrentVersionMojo
 
   @Parameter(required = false)
   private Map<String, String> coordinates;
+  
+  /**
+   * Useful when using the maven cli to look up the current version of a single artifact. Version range is 
+   * supported since the property is not split into a list.
+   */
+  @Parameter(required = false, property = "artifact")
+  private String artifact;
 
   /**
    * The artifacts to get the current version for group:artifact:version
@@ -56,9 +63,11 @@ public class StickyCurrentVersionMojo
   @Override
   public void execute()
       throws MojoExecutionException, MojoFailureException {
-
     List<ArtifactLookup> lookup = new ArrayList<>();
 
+    if (this.artifact != null)
+      lookup.add(new ArtifactLookup().withGav(this.artifact));
+    
     if (artifacts != null)
       for (String artifact : artifacts) {
         lookup.add(new ArtifactLookup().withGav(artifact));
